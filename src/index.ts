@@ -1,4 +1,136 @@
-// SP-404 Sound Manager - Entry Point
-// TODO: Implement CLI
+#!/usr/bin/env node
+import * as path from 'node:path'
+import { Command } from 'commander'
+import { exportCommand } from './commands/export.js'
+import { numberCommand } from './commands/number.js'
 
-console.log('SP-404 Sound Manager')
+const program = new Command()
+
+const DEFAULT_LOG_DIR = path.join(process.cwd(), 'logs')
+const DEFAULT_MAPPING_PATH = path.join(process.cwd(), 'config', 'mapping.yaml')
+
+program
+  .name('sound-manager')
+  .description('SP-404 MK2 にインポートする音源を管理するCLIツール')
+  .version('1.0.0')
+
+// number コマンド
+program
+  .command('number')
+  .description('音声ファイルに連番を付与する')
+  .argument('<dir>', '対象ディレクトリ')
+  .option('-d, --dry-run', 'ファイルを変更せずに結果をプレビュー', false)
+  .option('--log-dir <path>', 'ログディレクトリ', DEFAULT_LOG_DIR)
+  .action(async (dir: string, options: { dryRun: boolean; logDir: string }) => {
+    const absoluteDir = path.resolve(dir)
+    console.log(`\n📁 対象ディレクトリ: ${absoluteDir}`)
+    if (options.dryRun) {
+      console.log('🔍 DRY-RUN モード（ファイルは変更されません）\n')
+    }
+
+    const result = await numberCommand(absoluteDir, {
+      dryRun: options.dryRun,
+      logDir: options.logDir,
+    })
+
+    if (result.errors.length > 0) {
+      console.log('\n❌ エラー:')
+      for (const error of result.errors) {
+        console.log(`  - ${error}`)
+      }
+      process.exit(1)
+    }
+
+    if (result.renamedFiles.length > 0) {
+      console.log('\n✅ リネーム済み:')
+      for (const { from, to } of result.renamedFiles) {
+        console.log(`  ${from} → ${to}`)
+      }
+    }
+
+    if (result.skippedFiles.length > 0) {
+      console.log('\n⏭️ スキップ（採番済み）:')
+      for (const file of result.skippedFiles) {
+        console.log(`  ${file}`)
+      }
+    }
+
+    console.log(
+      `\n📊 結果: ${result.renamedFiles.length} ファイルをリネーム, ${result.skippedFiles.length} ファイルをスキップ`,
+    )
+  })
+
+// export コマンド
+program
+  .command('export')
+  .description('マッピングに従ってファイルをエクスポートする')
+  .argument('<from>', 'ソースディレクトリ')
+  .argument('<to>', '出力先ディレクトリ')
+  .option('-d, --dry-run', 'ファイルをコピーせずに結果をプレビュー', false)
+  .option('-o, --overwrite', '既存ファイルを上書き', false)
+  .option(
+    '-m, --mapping <path>',
+    'マッピングファイルのパス',
+    DEFAULT_MAPPING_PATH,
+  )
+  .option('--log-dir <path>', 'ログディレクトリ', DEFAULT_LOG_DIR)
+  .action(
+    async (
+      from: string,
+      to: string,
+      options: {
+        dryRun: boolean
+        overwrite: boolean
+        mapping: string
+        logDir: string
+      },
+    ) => {
+      const absoluteFrom = path.resolve(from)
+      const absoluteTo = path.resolve(to)
+      console.log(`\n📁 ソース: ${absoluteFrom}`)
+      console.log(`📁 出力先: ${absoluteTo}`)
+      console.log(`📄 マッピング: ${options.mapping}`)
+      if (options.dryRun) {
+        console.log('🔍 DRY-RUN モード（ファイルはコピーされません）')
+      }
+      if (options.overwrite) {
+        console.log('⚠️ 上書きモード')
+      }
+      console.log('')
+
+      const result = await exportCommand(absoluteFrom, absoluteTo, {
+        dryRun: options.dryRun,
+        overwrite: options.overwrite,
+        mappingPath: options.mapping,
+        logDir: options.logDir,
+      })
+
+      if (result.errors.length > 0) {
+        console.log('\n❌ エラー:')
+        for (const error of result.errors) {
+          console.log(`  - ${error}`)
+        }
+        process.exit(1)
+      }
+
+      if (result.copiedFiles.length > 0) {
+        console.log('✅ コピー済み:')
+        for (const { from, to } of result.copiedFiles) {
+          console.log(`  ${from} → ${to}`)
+        }
+      }
+
+      if (result.skippedFiles.length > 0) {
+        console.log('\n⏭️ スキップ:')
+        for (const { file, reason } of result.skippedFiles) {
+          console.log(`  ${file} (${reason})`)
+        }
+      }
+
+      console.log(
+        `\n📊 結果: ${result.copiedFiles.length} ファイルをコピー, ${result.skippedFiles.length} ファイルをスキップ`,
+      )
+    },
+  )
+
+program.parse()

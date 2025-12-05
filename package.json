@@ -30,5 +30,9 @@
   },
   "engines": {
     "node": "22.x"
+  },
+  "dependencies": {
+    "commander": "^14.0.2",
+    "yaml": "^2.8.2"
   }
 }

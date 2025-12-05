@@ -1,0 +1,49 @@
+# キー簡略化ルール（将来実装用）
+# キー: 検出されたキー
+# 値: 変換後のキー表記
+
+# メジャーキー
+Cmaj7: C7
+Dmaj7: D7
+Emaj7: E7
+Fmaj7: F7
+Gmaj7: G7
+Amaj7: A7
+Bmaj7: B7
+
+# マイナーキー
+Cmin7: Cm7
+Dmin7: Dm7
+Emin7: Em7
+Fmin7: Fm7
+Gmin7: Gm7
+Amin7: Am7
+Bmin7: Bm7
+
+# シャープ付きメジャーキー
+C#maj7: C#7
+D#maj7: D#7
+F#maj7: F#7
+G#maj7: G#7
+A#maj7: A#7
+
+# フラット付きメジャーキー
+Dbmaj7: Db7
+Ebmaj7: Eb7
+Gbmaj7: Gb7
+Abmaj7: Ab7
+Bbmaj7: Bb7
+
+# シャープ付きマイナーキー
+C#min7: C#m7
+D#min7: D#m7
+F#min7: F#m7
+G#min7: G#m7
+A#min7: A#m7
+
+# フラット付きマイナーキー
+Dbmin7: Dbm7
+Ebmin7: Ebm7
+Gbmin7: Gbm7
+Abmin7: Abm7
+Bbmin7: Bbm7
