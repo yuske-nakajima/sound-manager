@@ -35,12 +35,25 @@ riser: RS
 impact: IM
 noise: NS
 ambient: AM
+firework: FX
+game: FX
+jump: FX
+walk: FX
+foot: FX
+step: FX
+rain: AM
 
 # ボーカル系
 vocal: VO
 vox: VO
 chop: CH
 
+# 弦楽器系
+violin: VN
+guitar: GT
+
 # その他
 loop: LP
 sample: SP
+one_shot: OS
+chord: CD
