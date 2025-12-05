@@ -1,0 +1,8 @@
+.idea
+node_modules
+.DS_Store
+
+# AI tools
+.serena
+.tmp
+.claude/settings.local.json
