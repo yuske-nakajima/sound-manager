@@ -5,10 +5,14 @@
 # ドラム系
 hihat_open: HHO
 hihat_closed: HHC
+open_hat: HHO
+closed_hat: HHC
 hihat: HH
+hat: HH
 kick: KK
 snare: SN
 clap: CP
+snap: CP
 rim: RM
 tom: TM
 cymbal: CY
