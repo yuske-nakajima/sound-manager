@@ -1,7 +1,10 @@
 import * as fs from 'node:fs'
 import * as YAML from 'yaml'
+import { detectBpm } from './bpmDetector.js'
+import { isDrum } from './drumDetector.js'
 import { hasNumberSuffix } from './fileUtils.js'
 import { detectKey } from './keyDetector.js'
+import { isLoop } from './loopDetector.js'
 
 /**
  * YAML ファイルからマッピングを読み込む
@@ -57,6 +60,52 @@ export function transformFilename(
     return null
   }
 
+  // 番号サフィックスを抽出
+  const numberMatch = filename.match(/__(\d{4})\.(\w+)$/)
+  if (!numberMatch?.[1] || !numberMatch[2]) {
+    return null
+  }
+
+  const number = numberMatch[1]
+  const ext = numberMatch[2]
+
+  // ループ判定
+  if (isLoop(filename)) {
+    return transformLoopFilename(filename, number, ext)
+  }
+
+  // ループでない場合は既存のマッピングロジック
+  return transformNonLoopFilename(filename, mapping, number, ext)
+}
+
+/**
+ * ループファイルの変換
+ * ドラムループ: LP-D-{BPM}__{番号}.{ext}
+ * その他ループ: LP-M-{BPM}__{番号}.{ext}
+ */
+function transformLoopFilename(
+  filename: string,
+  number: string,
+  ext: string,
+): string {
+  const drumOrMusic = isDrum(filename) ? 'D' : 'M'
+  const bpm = detectBpm(filename)
+
+  if (bpm !== null) {
+    return `LP-${drumOrMusic}-${bpm}__${number}.${ext}`
+  }
+  return `LP-${drumOrMusic}__${number}.${ext}`
+}
+
+/**
+ * ループでないファイルの変換（既存ロジック）
+ */
+function transformNonLoopFilename(
+  filename: string,
+  mapping: Map<string, string>,
+  number: string,
+  ext: string,
+): string | null {
   // マッピングを検索
   const category = findMatch(filename, mapping)
   if (!category) {
@@ -65,14 +114,6 @@ export function transformFilename(
 
   // キーを検出
   const key = detectKey(filename)
-
-  // 番号サフィックスを抽出
-  const numberMatch = filename.match(/__(\d{4})\.(\w+)$/)
-  if (!numberMatch) {
-    return null
-  }
-
-  const [, number, ext] = numberMatch
 
   // 新しいファイル名を構築
   if (key) {

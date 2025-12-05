@@ -49,7 +49,8 @@ bass: BS
     })
 
     it('キーが正しく抽出・変換される', async () => {
-      fs.writeFileSync(path.join(FROM_DIR, 'bass_Am_loop__0005.wav'), 'data')
+      // "loop"を含まないファイル名でキー抽出をテスト
+      fs.writeFileSync(path.join(FROM_DIR, 'bass_Am_sample__0005.wav'), 'data')
 
       const result = await exportCommand(FROM_DIR, TO_DIR, {
         dryRun: false,

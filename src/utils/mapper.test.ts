@@ -116,9 +116,93 @@ snare: SN
     it('mp3 ファイルも正しく変換する', () => {
       const mapping = new Map([['bass', 'BS']])
 
-      const result = transformFilename('bass_Cm_loop__0010.mp3', mapping)
+      const result = transformFilename('bass_sample__0010.mp3', mapping)
 
-      expect(result).toBe('BS_Cm__0010.mp3')
+      expect(result).toBe('BS__0010.mp3')
+    })
+  })
+
+  describe('transformFilename - ループ変換', () => {
+    it('ドラムループ（BPMあり）は LP-D-{BPM} 形式に変換', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename(
+        '91V_PUKG_130_drum_top_loop__0001.wav',
+        mapping,
+      )
+
+      expect(result).toBe('LP-D-130__0001.wav')
+    })
+
+    it('ドラムループ（loopなし、BPMあり）も LP-D-{BPM} 形式に変換', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename(
+        'DS_VPT_100_drum_full_machine__0002.wav',
+        mapping,
+      )
+
+      expect(result).toBe('LP-D-100__0002.wav')
+    })
+
+    it('ドラムループ（BPM 90）も正しく変換', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename(
+        'SLS_CSP_90_drum_kit_rnb__0008.wav',
+        mapping,
+      )
+
+      expect(result).toBe('LP-D-90__0008.wav')
+    })
+
+    it('その他ミュージックループは LP-M-{BPM} 形式に変換', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename('synth_loop_100_pad__0001.wav', mapping)
+
+      expect(result).toBe('LP-M-100__0001.wav')
+    })
+
+    it('ベースループは LP-M-{BPM} 形式に変換', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename(
+        'bass_120_loop_groove__0005.wav',
+        mapping,
+      )
+
+      expect(result).toBe('LP-M-120__0005.wav')
+    })
+
+    it('BPMなしのloopファイルはBPM部分を省略', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename('drum_loop_groove__0001.wav', mapping)
+
+      expect(result).toBe('LP-D__0001.wav')
+    })
+
+    it('ループでないファイルは既存マッピングを使用', () => {
+      const mapping = new Map([
+        ['loop', 'LP'],
+        ['kick', 'KK'],
+      ])
+
+      const result = transformFilename('kick_sample__0001.wav', mapping)
+
+      expect(result).toBe('KK__0001.wav')
+    })
+
+    it('ループでない + キーありのファイルは既存マッピングを使用', () => {
+      const mapping = new Map([
+        ['loop', 'LP'],
+        ['hihat', 'HH'],
+      ])
+
+      const result = transformFilename('hihat_Am_sample__0001.wav', mapping)
+
+      expect(result).toBe('HH_Am__0001.wav')
     })
   })
 })
