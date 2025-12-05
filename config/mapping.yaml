@@ -24,6 +24,7 @@ perc: PC
 
 # ベース系
 bass: BS
+_bs_: BS
 sub: SUB
 
 # シンセ・リード系
@@ -32,6 +33,12 @@ lead: LD
 pad: PD
 arp: AR
 pluck: PL
+stab: ST
+
+# ブラス系
+trumpet: TP
+brass: BR
+horn: HR
 
 # エフェクト系
 fx: FX
