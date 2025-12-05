@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { detectKey } from '../../src/utils/keyDetector'
+import { detectKey } from './keyDetector'
 
 describe('keyDetector', () => {
   describe('detectKey', () => {

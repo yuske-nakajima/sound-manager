@@ -6,7 +6,7 @@ import {
   extractMaxNumber,
   getAudioFiles,
   hasNumberSuffix,
-} from '../../src/utils/fileUtils'
+} from './fileUtils'
 
 const TEST_DIR = path.join(process.cwd(), '.tmp', 'test-files')
 

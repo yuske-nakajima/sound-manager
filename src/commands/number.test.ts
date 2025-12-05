@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { numberCommand } from '../../src/commands/number'
+import { numberCommand } from './number'
 
 const TEST_DIR = path.join(process.cwd(), '.tmp', 'test-number')
 const LOG_DIR = path.join(TEST_DIR, 'logs')
@@ -26,8 +26,8 @@ describe('numberCommand', () => {
       })
 
       expect(result.renamedFiles).toHaveLength(1)
-      expect(result.renamedFiles[0].from).toBe('sample.wav')
-      expect(result.renamedFiles[0].to).toBe('sample__0001.wav')
+      expect(result.renamedFiles[0]?.from).toBe('sample.wav')
+      expect(result.renamedFiles[0]?.to).toBe('sample__0001.wav')
       expect(fs.existsSync(path.join(TEST_DIR, 'sample__0001.wav'))).toBe(true)
       expect(fs.existsSync(path.join(TEST_DIR, 'sample.wav'))).toBe(false)
     })
@@ -41,7 +41,7 @@ describe('numberCommand', () => {
       })
 
       expect(result.renamedFiles).toHaveLength(1)
-      expect(result.renamedFiles[0].to).toBe('sample__0001.mp3')
+      expect(result.renamedFiles[0]?.to).toBe('sample__0001.mp3')
     })
 
     it('既存の最大値 + 1 から開始', async () => {
@@ -55,7 +55,7 @@ describe('numberCommand', () => {
       })
 
       expect(result.renamedFiles).toHaveLength(1)
-      expect(result.renamedFiles[0].to).toBe('c__0011.wav')
+      expect(result.renamedFiles[0]?.to).toBe('c__0011.wav')
     })
 
     it('既に採番済みのファイルはスキップされる', async () => {

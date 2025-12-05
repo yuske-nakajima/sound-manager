@@ -1,11 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import {
-  findMatch,
-  loadMapping,
-  transformFilename,
-} from '../../src/utils/mapper'
+import { findMatch, loadMapping, transformFilename } from './mapper'
 
 const TEST_DIR = path.join(process.cwd(), '.tmp', 'test-mapper')
 

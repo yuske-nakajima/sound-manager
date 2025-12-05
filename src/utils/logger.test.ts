@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createLogger } from '../../src/utils/logger'
+import { createLogger } from './logger'
 
 const TEST_LOG_DIR = path.join(process.cwd(), '.tmp', 'test-logs')
 
