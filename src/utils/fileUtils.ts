@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import { SUPPORTED_EXTENSIONS } from '../types/index.js'
+import { SUPPORTED_EXTENSIONS } from '../types/index'
 
 const NUMBER_SUFFIX_PATTERN = /__(\d{4})\.\w+$/
 

@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { NumberResult } from '../types/index.js'
+import type { NumberResult } from '../types/index'
 import {
   addNumberSuffix,
   extractMaxNumber,

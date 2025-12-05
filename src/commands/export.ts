@@ -1,6 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { ExportResult } from '../types/index.js'
+import type { ExportResult } from '../types/index'
 import { getAudioFiles, hasNumberSuffix } from '../utils/fileUtils.js'
 import { createLogger } from '../utils/logger.js'
 import { loadMapping, transformFilename } from '../utils/mapper.js'
