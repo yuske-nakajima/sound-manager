@@ -72,9 +72,9 @@ program
 // export コマンド
 program
   .command('export')
-  .description('マッピングに従ってファイルをエクスポートする')
-  .argument('<from>', 'ソースディレクトリ')
+  .description('番号管理JSONに従ってファイルをエクスポートする')
   .argument('<to>', '出力先ディレクトリ')
+  .requiredOption('--json <path>', '番号管理JSONファイルのパス')
   .option('-d, --dry-run', 'ファイルをコピーせずに結果をプレビュー', false)
   .option('-o, --overwrite', '既存ファイルを上書き', false)
   .option(
@@ -85,18 +85,18 @@ program
   .option('--log-dir <path>', 'ログディレクトリ', DEFAULT_LOG_DIR)
   .action(
     async (
-      from: string,
       to: string,
       options: {
+        json: string
         dryRun: boolean
         overwrite: boolean
         mapping: string
         logDir: string
       },
     ) => {
-      const absoluteFrom = path.resolve(from)
+      const absoluteJsonPath = path.resolve(options.json)
       const absoluteTo = path.resolve(to)
-      console.log(`\n📁 ソース: ${absoluteFrom}`)
+      console.log(`\n📄 番号管理JSON: ${absoluteJsonPath}`)
       console.log(`📁 出力先: ${absoluteTo}`)
       console.log(`📄 マッピング: ${options.mapping}`)
       if (options.dryRun) {
@@ -107,7 +107,8 @@ program
       }
       console.log('')
 
-      const result = await exportCommand(absoluteFrom, absoluteTo, {
+      const result = await exportCommand(absoluteTo, {
+        jsonPath: absoluteJsonPath,
         dryRun: options.dryRun,
         overwrite: options.overwrite,
         mappingPath: options.mapping,

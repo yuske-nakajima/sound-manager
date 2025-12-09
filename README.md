@@ -102,20 +102,22 @@ npm run start -- number ./sounds-b --json ./number-mapping.json
 
 ### エクスポートコマンド (export)
 
-マッピングファイルに従って、ファイル名を変換しながら別ディレクトリにコピーします。
+番号管理 JSON ファイルに登録されたファイルを、マッピングルールに従って変換しながら出力先ディレクトリにコピーします。
+異なるディレクトリに散らばったファイルを一括でエクスポートできます。
 
 ```bash
 # 基本的な使い方
-npm run start -- export <ソースディレクトリ> <出力先ディレクトリ>
+npm run start -- export --json <番号管理JSONファイル> <出力先ディレクトリ>
 
-# 例: ./sounds から ./output へエクスポート
-npm run start -- export ./sounds ./output
+# 例: number-mapping.json に登録されたファイルを ./output へエクスポート
+npm run start -- export --json ./number-mapping.json ./output
 ```
 
 #### オプション
 
 | オプション | 説明 | デフォルト |
 |-----------|------|-----------|
+| `--json <path>` | 番号管理JSONファイルのパス | **必須** |
 | `-d, --dry-run` | ファイルをコピーせずに結果をプレビュー | `false` |
 | `-o, --overwrite` | 出力先に同名ファイルがあれば上書き | `false` |
 | `-m, --mapping <path>` | マッピングファイルのパス | `./config/mapping.yaml` |
@@ -125,36 +127,38 @@ npm run start -- export ./sounds ./output
 
 ```bash
 # dry-run でエクスポート内容を確認
-npm run start -- export ./sounds ./output --dry-run
+npm run start -- export --json ./number-mapping.json ./output --dry-run
 
 # カスタムマッピングファイルを使用
-npm run start -- export ./sounds ./output -m ./my-mapping.yaml
+npm run start -- export --json ./number-mapping.json ./output -m ./my-mapping.yaml
 
 # 既存ファイルを上書きしてエクスポート
-npm run start -- export ./sounds ./output --overwrite
+npm run start -- export --json ./number-mapping.json ./output --overwrite
 
 # 実行結果の例
-# 📁 ソース: /path/to/sounds
+# 📄 番号管理JSON: /path/to/number-mapping.json
 # 📁 出力先: /path/to/output
 # 📄 マッピング: /path/to/config/mapping.yaml
 #
 # ✅ コピー済み:
-#   hihat_Am_sample__0001.wav → HH_Am__0001.wav
-#   kick_heavy__0002.mp3 → KK__0002.mp3
+#   /sounds-a/hihat_Am_sample__0001.wav → HH_Am__0001.wav
+#   /sounds-b/kick_heavy__0002.mp3 → KK__0002.mp3
 #
 # ⏭️ スキップ:
-#   unknown_sample__0003.wav (no mapping found)
-#   snare_sample.wav (not numbered)
+#   /sounds-a/unknown_sample__0003.wav (no mapping found)
+#   /sounds-b/missing__0004.wav (file not found)
 #
 # 📊 結果: 2 ファイルをコピー, 2 ファイルをスキップ
 ```
 
 #### 動作仕様
 
-1. **採番済みファイルのみ** がエクスポート対象（`__XXXX` 形式）
-2. マッピングルールに一致しないファイルはスキップ
-3. ファイル名に含まれる音楽キー（Am, C#, Bbm など）は保持される
-4. 出力先に同名ファイルがある場合はスキップ（`--overwrite` で上書き可）
+1. 番号管理 JSON に登録されたファイルがエクスポート対象
+2. 各ファイルの `directory` フィールドからソースパスを特定
+3. マッピングルールに一致しないファイルはスキップ
+4. ファイル名に含まれる音楽キー（Am, C#, Bbm など）は保持される
+5. 出力先に同名ファイルがある場合はスキップ（`--overwrite` で上書き可）
+6. 存在しないファイル（削除済みなど）はスキップ
 
 #### ファイル名変換の例
 

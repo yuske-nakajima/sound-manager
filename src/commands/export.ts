@@ -1,11 +1,12 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { ExportResult } from '../types/index'
-import { getAudioFiles, hasNumberSuffix } from '../utils/fileUtils.js'
+import type { ExportResult, NumberMapping } from '../types/index'
 import { createLogger } from '../utils/logger.js'
 import { loadMapping, transformFilename } from '../utils/mapper.js'
+import { loadNumberMapping } from '../utils/numberMapping.js'
 
 interface ExportCommandOptions {
+  jsonPath: string
   dryRun: boolean
   overwrite: boolean
   mappingPath: string
@@ -14,10 +15,9 @@ interface ExportCommandOptions {
 
 /**
  * エクスポートコマンド
- * マッピングに従ってファイルを変換・コピーする
+ * 番号管理JSONに従ってファイルを変換・コピーする
  */
 export async function exportCommand(
-  fromDir: string,
   toDir: string,
   options: ExportCommandOptions,
 ): Promise<ExportResult> {
@@ -29,9 +29,20 @@ export async function exportCommand(
 
   const logger = createLogger(options.logDir)
 
-  // ディレクトリの存在確認
-  if (!fs.existsSync(fromDir)) {
-    const errorMsg = `Source directory not found: ${fromDir}`
+  // 番号管理JSONを読み込み
+  let numberMapping: NumberMapping
+  try {
+    numberMapping = loadNumberMapping(options.jsonPath)
+  } catch {
+    const errorMsg = `Failed to load number mapping: ${options.jsonPath}`
+    result.errors.push(errorMsg)
+    logger.error('export', errorMsg)
+    return result
+  }
+
+  // マッピングが空の場合
+  if (Object.keys(numberMapping.mappings).length === 0) {
+    const errorMsg = 'Number mapping is empty'
     result.errors.push(errorMsg)
     logger.error('export', errorMsg)
     return result
@@ -42,33 +53,39 @@ export async function exportCommand(
     fs.mkdirSync(toDir, { recursive: true })
   }
 
-  // マッピングを読み込み
-  let mapping: Map<string, string>
+  // カテゴリマッピングを読み込み
+  let categoryMapping: Map<string, string>
   try {
-    mapping = loadMapping(options.mappingPath)
+    categoryMapping = loadMapping(options.mappingPath)
   } catch {
-    const errorMsg = `Failed to load mapping: ${options.mappingPath}`
+    const errorMsg = `Failed to load category mapping: ${options.mappingPath}`
     result.errors.push(errorMsg)
     logger.error('export', errorMsg)
     return result
   }
 
-  // 音声ファイル一覧を取得
-  const files = getAudioFiles(fromDir)
+  // 番号管理JSONの各エントリを処理
+  for (const [numberKey, entry] of Object.entries(numberMapping.mappings)) {
+    const { originalName, directory } = entry
 
-  for (const file of files) {
-    // 未採番ファイルはスキップ
-    if (!hasNumberSuffix(file)) {
-      result.skippedFiles.push({ file, reason: 'not numbered' })
-      logger.debug('export', `Skipped (not numbered): ${file}`)
+    // 採番後のファイル名を構築
+    const ext = path.extname(originalName)
+    const baseName = path.basename(originalName, ext)
+    const numberedFileName = `${baseName}__${numberKey}${ext}`
+    const srcPath = path.join(directory, numberedFileName)
+
+    // ソースファイルの存在確認
+    if (!fs.existsSync(srcPath)) {
+      result.skippedFiles.push({ file: srcPath, reason: 'file not found' })
+      logger.debug('export', `Skipped (file not found): ${srcPath}`)
       continue
     }
 
     // ファイル名を変換
-    const newName = transformFilename(file, mapping)
+    const newName = transformFilename(numberedFileName, categoryMapping)
     if (!newName) {
-      result.skippedFiles.push({ file, reason: 'no mapping found' })
-      logger.debug('export', `Skipped (no mapping): ${file}`)
+      result.skippedFiles.push({ file: srcPath, reason: 'no mapping found' })
+      logger.debug('export', `Skipped (no mapping): ${srcPath}`)
       continue
     }
 
@@ -76,21 +93,23 @@ export async function exportCommand(
 
     // 既存ファイルのチェック
     if (!options.overwrite && fs.existsSync(destPath)) {
-      result.skippedFiles.push({ file, reason: 'already exists' })
-      logger.debug('export', `Skipped (already exists): ${file} -> ${newName}`)
+      result.skippedFiles.push({ file: srcPath, reason: 'already exists' })
+      logger.debug(
+        'export',
+        `Skipped (already exists): ${srcPath} -> ${newName}`,
+      )
       continue
     }
 
     if (!options.dryRun) {
       // ファイルをコピー
-      const srcPath = path.join(fromDir, file)
       fs.copyFileSync(srcPath, destPath)
     }
 
-    result.copiedFiles.push({ from: file, to: newName })
+    result.copiedFiles.push({ from: srcPath, to: newName })
     logger.info(
       'export',
-      `${options.dryRun ? '[DRY-RUN] ' : ''}Copied: ${file} -> ${newName}`,
+      `${options.dryRun ? '[DRY-RUN] ' : ''}Copied: ${srcPath} -> ${newName}`,
     )
   }
 
