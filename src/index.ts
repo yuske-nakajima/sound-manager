@@ -50,7 +50,7 @@ program
       }
 
       if (result.renamedFiles.length > 0) {
-        console.log('\n✅ リネーム済み:')
+        console.log('\n✅ マッピング済み:')
         for (const { from, to } of result.renamedFiles) {
           console.log(`  ${from} → ${to}`)
         }
@@ -64,7 +64,7 @@ program
       }
 
       console.log(
-        `\n📊 結果: ${result.renamedFiles.length} ファイルをリネーム, ${result.skippedFiles.length} ファイルをスキップ`,
+        `\n📊 結果: ${result.renamedFiles.length} ファイルをマッピング, ${result.skippedFiles.length} ファイルをスキップ`,
       )
     },
   )
