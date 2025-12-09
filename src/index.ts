@@ -19,46 +19,55 @@ program
   .command('number')
   .description('音声ファイルに連番を付与する')
   .argument('<dir>', '対象ディレクトリ')
+  .requiredOption('--json <path>', '番号管理JSONファイルのパス')
   .option('-d, --dry-run', 'ファイルを変更せずに結果をプレビュー', false)
   .option('--log-dir <path>', 'ログディレクトリ', DEFAULT_LOG_DIR)
-  .action(async (dir: string, options: { dryRun: boolean; logDir: string }) => {
-    const absoluteDir = path.resolve(dir)
-    console.log(`\n📁 対象ディレクトリ: ${absoluteDir}`)
-    if (options.dryRun) {
-      console.log('🔍 DRY-RUN モード（ファイルは変更されません）\n')
-    }
-
-    const result = await numberCommand(absoluteDir, {
-      dryRun: options.dryRun,
-      logDir: options.logDir,
-    })
-
-    if (result.errors.length > 0) {
-      console.log('\n❌ エラー:')
-      for (const error of result.errors) {
-        console.log(`  - ${error}`)
+  .action(
+    async (
+      dir: string,
+      options: { json: string; dryRun: boolean; logDir: string },
+    ) => {
+      const absoluteDir = path.resolve(dir)
+      const absoluteJsonPath = path.resolve(options.json)
+      console.log(`\n📁 対象ディレクトリ: ${absoluteDir}`)
+      console.log(`📄 番号管理JSON: ${absoluteJsonPath}`)
+      if (options.dryRun) {
+        console.log('🔍 DRY-RUN モード（ファイルは変更されません）\n')
       }
-      process.exit(1)
-    }
 
-    if (result.renamedFiles.length > 0) {
-      console.log('\n✅ リネーム済み:')
-      for (const { from, to } of result.renamedFiles) {
-        console.log(`  ${from} → ${to}`)
+      const result = await numberCommand(absoluteDir, {
+        jsonPath: absoluteJsonPath,
+        dryRun: options.dryRun,
+        logDir: options.logDir,
+      })
+
+      if (result.errors.length > 0) {
+        console.log('\n❌ エラー:')
+        for (const error of result.errors) {
+          console.log(`  - ${error}`)
+        }
+        process.exit(1)
       }
-    }
 
-    if (result.skippedFiles.length > 0) {
-      console.log('\n⏭️ スキップ（採番済み）:')
-      for (const file of result.skippedFiles) {
-        console.log(`  ${file}`)
+      if (result.renamedFiles.length > 0) {
+        console.log('\n✅ リネーム済み:')
+        for (const { from, to } of result.renamedFiles) {
+          console.log(`  ${from} → ${to}`)
+        }
       }
-    }
 
-    console.log(
-      `\n📊 結果: ${result.renamedFiles.length} ファイルをリネーム, ${result.skippedFiles.length} ファイルをスキップ`,
-    )
-  })
+      if (result.skippedFiles.length > 0) {
+        console.log('\n⏭️ スキップ（採番済み）:')
+        for (const file of result.skippedFiles) {
+          console.log(`  ${file}`)
+        }
+      }
+
+      console.log(
+        `\n📊 結果: ${result.renamedFiles.length} ファイルをリネーム, ${result.skippedFiles.length} ファイルをスキップ`,
+      )
+    },
+  )
 
 // export コマンド
 program

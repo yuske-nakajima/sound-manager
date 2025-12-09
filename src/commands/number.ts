@@ -3,13 +3,18 @@ import * as path from 'node:path'
 import type { NumberResult } from '../types/index'
 import {
   addNumberSuffix,
-  extractMaxNumber,
   getAudioFiles,
   hasNumberSuffix,
 } from '../utils/fileUtils.js'
 import { createLogger } from '../utils/logger.js'
+import {
+  formatNumber,
+  loadNumberMapping,
+  saveNumberMapping,
+} from '../utils/numberMapping.js'
 
 interface NumberOptions {
+  jsonPath: string
   dryRun: boolean
   logDir: string
 }
@@ -17,6 +22,7 @@ interface NumberOptions {
 /**
  * 採番コマンド
  * 指定ディレクトリ内の音声ファイルに連番を付与する
+ * 番号はJSONファイルで一元管理し、重複を防ぐ
  */
 export async function numberCommand(
   dirPath: string,
@@ -38,11 +44,12 @@ export async function numberCommand(
     return result
   }
 
+  // 番号マッピングを読み込み（存在しなければ新規作成）
+  const mapping = loadNumberMapping(options.jsonPath)
+  let currentNumber = mapping.lastNumber
+
   // 音声ファイル一覧を取得
   const files = getAudioFiles(dirPath)
-
-  // 既存の最大番号を取得
-  let currentNumber = extractMaxNumber(files)
 
   // ファイルをソートして処理（順序を安定させるため）
   const sortedFiles = [...files].sort()
@@ -58,12 +65,20 @@ export async function numberCommand(
     // 次の番号を割り当て
     currentNumber++
     const newName = addNumberSuffix(file, currentNumber)
+    const numberKey = formatNumber(currentNumber)
 
     if (!options.dryRun) {
       // 実際にリネーム
       const oldPath = path.join(dirPath, file)
       const newPath = path.join(dirPath, newName)
       fs.renameSync(oldPath, newPath)
+
+      // マッピングに追記
+      mapping.mappings[numberKey] = {
+        originalName: file,
+        directory: dirPath,
+      }
+      mapping.lastNumber = currentNumber
     }
 
     result.renamedFiles.push({ from: file, to: newName })
@@ -71,6 +86,12 @@ export async function numberCommand(
       'number',
       `${options.dryRun ? '[DRY-RUN] ' : ''}Renamed: ${file} -> ${newName}`,
     )
+  }
+
+  // JSONファイルを保存（dry-run時は保存しない）
+  if (!options.dryRun && result.renamedFiles.length > 0) {
+    saveNumberMapping(options.jsonPath, mapping)
+    logger.info('number', `Saved mapping to: ${options.jsonPath}`)
   }
 
   return result

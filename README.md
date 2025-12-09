@@ -24,19 +24,21 @@ npm install
 ### 採番コマンド (number)
 
 指定ディレクトリ内の音声ファイルに連番（`__0001`, `__0002`, ...）を付与します。
+番号は JSON ファイルで一元管理され、異なるディレクトリで作業しても重複しません。
 
 ```bash
 # 基本的な使い方
-npm run start -- number <対象ディレクトリ>
+npm run start -- number <対象ディレクトリ> --json <番号管理JSONファイル>
 
 # 例: ./sounds ディレクトリ内のファイルに採番
-npm run start -- number ./sounds
+npm run start -- number ./sounds --json ./number-mapping.json
 ```
 
 #### オプション
 
 | オプション | 説明 | デフォルト |
 |-----------|------|-----------|
+| `--json <path>` | 番号管理JSONファイルのパス | **必須** |
 | `-d, --dry-run` | ファイルを変更せずに結果をプレビュー | `false` |
 | `--log-dir <path>` | ログ出力先ディレクトリ | `./logs` |
 
@@ -44,10 +46,15 @@ npm run start -- number ./sounds
 
 ```bash
 # dry-run で変更内容を確認（実際にはファイルを変更しない）
-npm run start -- number ./sounds --dry-run
+npm run start -- number ./sounds --json ./number-mapping.json --dry-run
+
+# 異なるディレクトリで同じJSONを使用（番号が重複しない）
+npm run start -- number ./sounds-a --json ./number-mapping.json
+npm run start -- number ./sounds-b --json ./number-mapping.json
 
 # 実行結果の例
 # 📁 対象ディレクトリ: /path/to/sounds
+# 📄 番号管理JSON: /path/to/number-mapping.json
 # 🔍 DRY-RUN モード（ファイルは変更されません）
 #
 # ✅ リネーム済み:
@@ -60,11 +67,36 @@ npm run start -- number ./sounds --dry-run
 # 📊 結果: 2 ファイルをリネーム, 1 ファイルをスキップ
 ```
 
+#### 番号管理JSONファイルの形式
+
+```json
+{
+  "version": 1,
+  "lastNumber": 3,
+  "mappings": {
+    "0001": {
+      "originalName": "hihat_Am_sample.wav",
+      "directory": "/path/to/sounds-a"
+    },
+    "0002": {
+      "originalName": "kick_heavy.mp3",
+      "directory": "/path/to/sounds-a"
+    },
+    "0003": {
+      "originalName": "snare.wav",
+      "directory": "/path/to/sounds-b"
+    }
+  }
+}
+```
+
 #### 動作仕様
 
 1. 既に `__XXXX` 形式の番号が付いているファイルはスキップ
-2. 既存ファイルの最大番号 + 1 から採番を開始
+2. JSON ファイルの `lastNumber` + 1 から採番を開始
 3. 番号は4桁ゼロ埋め（例: `__0001`, `__0099`, `__1234`）
+4. JSON ファイルが存在しない場合は自動で新規作成
+5. dry-run モードでは JSON ファイルは更新されない
 
 ---
 
@@ -292,6 +324,8 @@ src/
 │   ├── keyDetector.test.ts
 │   ├── mapper.ts          # 名前変換
 │   ├── mapper.test.ts
+│   ├── numberMapping.ts   # 番号管理JSON操作
+│   ├── numberMapping.test.ts
 │   ├── logger.ts          # ロガー
 │   └── logger.test.ts
 ├── types/

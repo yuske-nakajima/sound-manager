@@ -12,6 +12,19 @@ export interface NumberResult {
   errors: string[]
 }
 
+// 番号マッピングのエントリ
+export interface NumberMappingEntry {
+  originalName: string
+  directory: string
+}
+
+// 番号マッピング（JSON ファイルの構造）
+export interface NumberMapping {
+  version: number
+  lastNumber: number
+  mappings: Record<string, NumberMappingEntry>
+}
+
 // エクスポートコマンドのオプション
 export interface ExportOptions {
   dryRun: boolean
