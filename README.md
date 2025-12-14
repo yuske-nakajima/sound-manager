@@ -1,5 +1,8 @@
 # Sound Manager
 
+[![Check](https://github.com/yuske-nakajima/sound-manager/actions/workflows/lint.yml/badge.svg)](https://github.com/yuske-nakajima/sound-manager/actions/workflows/check.yml)
+[![Test](https://github.com/yuske-nakajima/sound-manager/actions/workflows/test.yml/badge.svg)](https://github.com/yuske-nakajima/sound-manager/actions/workflows/test.yml)
+
 SP-404 MK2 にインポートする音源を管理するための CLI ツール。
 
 ## 機能

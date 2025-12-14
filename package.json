@@ -10,7 +10,7 @@
     "lint": "biome lint .",
     "format": "biome format . --write",
     "fix": "biome check --write",
-    "check": "tsc --noEmit && npm run fix && npm run lint",
+    "check": "tsc --noEmit && npm run lint",
     "prepare": "husky"
   },
   "keywords": [
