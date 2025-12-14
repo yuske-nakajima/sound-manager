@@ -1,0 +1,70 @@
+# カテゴリマッピング設定
+# キー: ファイル名に含まれるキーワード（大文字小文字区別なし）
+# 値: 変換後のカテゴリ名
+
+# ドラム系
+hihat_open: HHO
+hihat_closed: HHC
+open_hat: HHO
+closed_hat: HHC
+hihat: HH
+hat: HH
+kick: KK
+snare: SN
+clap: CP
+snap: CP
+rim: RM
+tom: TM
+cymbal: CY
+ride: RD
+crash: CR
+shaker: SK
+tambourine: TB
+perc: PC
+
+# ベース系
+bass: BS
+_bs_: BS
+sub: SUB
+
+# シンセ・リード系
+synth: SY
+lead: LD
+pad: PD
+arp: AR
+pluck: PL
+stab: ST
+
+# ブラス系
+trumpet: TP
+brass: BR
+horn: HR
+
+# エフェクト系
+fx: FX
+riser: RS
+impact: IM
+noise: NS
+ambient: AM
+firework: FX
+game: FX
+jump: FX
+walk: FX
+foot: FX
+step: FX
+rain: AM
+
+# ボーカル系
+vocal: VO
+vox: VO
+chop: CH
+
+# 弦楽器系
+violin: VN
+guitar: GT
+
+# その他
+loop: LP
+sample: SP
+one_shot: OS
+chord: CD
