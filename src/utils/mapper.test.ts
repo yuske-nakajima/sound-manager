@@ -235,6 +235,13 @@ snare: SN
       expect(extractCategory('LP-D-120__0001.mp3')).toBe('LP-D')
     })
 
+    it('7thコードなど数字を含むキーからも抽出できる', () => {
+      expect(extractCategory('PN_Eb7__0188.wav')).toBe('PN')
+      expect(extractCategory('PN_Cmaj7__0694.wav')).toBe('PN')
+      expect(extractCategory('GT_Amaj7__0700.wav')).toBe('GT')
+      expect(extractCategory('PN_C7__0718.wav')).toBe('PN')
+    })
+
     it('無効なファイル名は null を返す', () => {
       expect(extractCategory('invalid.wav')).toBeNull()
       expect(extractCategory('')).toBeNull()
