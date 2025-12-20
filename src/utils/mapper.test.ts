@@ -1,7 +1,12 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { findMatch, loadMapping, transformFilename } from './mapper'
+import {
+  extractCategory,
+  findMatch,
+  loadMapping,
+  transformFilename,
+} from './mapper'
 
 const TEST_DIR = path.join(process.cwd(), '.tmp', 'test-mapper')
 
@@ -203,6 +208,37 @@ snare: SN
       const result = transformFilename('hihat_Am_sample__0001.wav', mapping)
 
       expect(result).toBe('HH_Am__0001.wav')
+    })
+  })
+
+  describe('extractCategory', () => {
+    it('通常ファイルからカテゴリを抽出する', () => {
+      expect(extractCategory('HH_Am__0001.wav')).toBe('HH')
+      expect(extractCategory('KK__0002.wav')).toBe('KK')
+      expect(extractCategory('SN__0003.wav')).toBe('SN')
+      expect(extractCategory('BS_Cm__0004.wav')).toBe('BS')
+    })
+
+    it('ドラムループからカテゴリを抽出する', () => {
+      expect(extractCategory('LP-D-120__0001.wav')).toBe('LP-D')
+      expect(extractCategory('LP-D-90__0002.wav')).toBe('LP-D')
+      expect(extractCategory('LP-D__0003.wav')).toBe('LP-D')
+    })
+
+    it('ミュージックループからカテゴリを抽出する', () => {
+      expect(extractCategory('LP-M-100__0001.wav')).toBe('LP-M')
+      expect(extractCategory('LP-M__0002.wav')).toBe('LP-M')
+    })
+
+    it('mp3 ファイルからも抽出できる', () => {
+      expect(extractCategory('HH_Am__0001.mp3')).toBe('HH')
+      expect(extractCategory('LP-D-120__0001.mp3')).toBe('LP-D')
+    })
+
+    it('無効なファイル名は null を返す', () => {
+      expect(extractCategory('invalid.wav')).toBeNull()
+      expect(extractCategory('')).toBeNull()
+      expect(extractCategory('no_number.wav')).toBeNull()
     })
   })
 })

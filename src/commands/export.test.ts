@@ -63,8 +63,8 @@ bass: BS
       })
 
       expect(result.copiedFiles).toHaveLength(1)
-      expect(result.copiedFiles[0]?.to).toBe('HH__0001.wav')
-      expect(fs.existsSync(path.join(TO_DIR, 'HH__0001.wav'))).toBe(true)
+      expect(result.copiedFiles[0]?.to).toBe(path.join('HH', 'HH__0001.wav'))
+      expect(fs.existsSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'))).toBe(true)
     })
 
     it('異なるディレクトリのファイルを一括エクスポート', async () => {
@@ -98,8 +98,8 @@ bass: BS
       })
 
       expect(result.copiedFiles).toHaveLength(2)
-      expect(fs.existsSync(path.join(TO_DIR, 'HH__0001.wav'))).toBe(true)
-      expect(fs.existsSync(path.join(TO_DIR, 'KK__0002.wav'))).toBe(true)
+      expect(fs.existsSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'))).toBe(true)
+      expect(fs.existsSync(path.join(TO_DIR, 'KK', 'KK__0002.wav'))).toBe(true)
     })
 
     it('キーが正しく抽出・変換される', async () => {
@@ -129,7 +129,7 @@ bass: BS
       })
 
       expect(result.copiedFiles).toHaveLength(1)
-      expect(result.copiedFiles[0]?.to).toBe('BS_Am__0005.wav')
+      expect(result.copiedFiles[0]?.to).toBe(path.join('BS', 'BS_Am__0005.wav'))
     })
 
     it('mp3 ファイルも正しくコピーされる', async () => {
@@ -153,8 +153,8 @@ bass: BS
       })
 
       expect(result.copiedFiles).toHaveLength(1)
-      expect(result.copiedFiles[0]?.to).toBe('KK__0002.mp3')
-      expect(fs.existsSync(path.join(TO_DIR, 'KK__0002.mp3'))).toBe(true)
+      expect(result.copiedFiles[0]?.to).toBe(path.join('KK', 'KK__0002.mp3'))
+      expect(fs.existsSync(path.join(TO_DIR, 'KK', 'KK__0002.mp3'))).toBe(true)
     })
   })
 
@@ -216,7 +216,9 @@ bass: BS
 
     it('既存ファイルはスキップ（overwrite=false）', async () => {
       fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample__0001.wav'), 'new')
-      fs.writeFileSync(path.join(TO_DIR, 'HH__0001.wav'), 'old')
+      // カテゴリディレクトリを作成して既存ファイルを配置
+      fs.mkdirSync(path.join(TO_DIR, 'HH'), { recursive: true })
+      fs.writeFileSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'), 'old')
 
       const mapping: NumberMapping = {
         version: 1,
@@ -240,16 +242,18 @@ bass: BS
       expect(result.skippedFiles[0]?.reason).toContain('already exists')
 
       // 元のファイルは上書きされていない
-      expect(fs.readFileSync(path.join(TO_DIR, 'HH__0001.wav'), 'utf-8')).toBe(
-        'old',
-      )
+      expect(
+        fs.readFileSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'), 'utf-8'),
+      ).toBe('old')
     })
   })
 
   describe('overwrite オプション', () => {
     it('overwrite=true で既存ファイルを上書き', async () => {
       fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample__0001.wav'), 'new')
-      fs.writeFileSync(path.join(TO_DIR, 'HH__0001.wav'), 'old')
+      // カテゴリディレクトリを作成して既存ファイルを配置
+      fs.mkdirSync(path.join(TO_DIR, 'HH'), { recursive: true })
+      fs.writeFileSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'), 'old')
 
       const mapping: NumberMapping = {
         version: 1,
@@ -269,9 +273,9 @@ bass: BS
       })
 
       expect(result.copiedFiles).toHaveLength(1)
-      expect(fs.readFileSync(path.join(TO_DIR, 'HH__0001.wav'), 'utf-8')).toBe(
-        'new',
-      )
+      expect(
+        fs.readFileSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'), 'utf-8'),
+      ).toBe('new')
     })
   })
 
@@ -300,7 +304,7 @@ bass: BS
       })
 
       expect(result.copiedFiles).toHaveLength(1)
-      expect(fs.existsSync(path.join(TO_DIR, 'HH__0001.wav'))).toBe(false)
+      expect(fs.existsSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'))).toBe(false)
     })
   })
 

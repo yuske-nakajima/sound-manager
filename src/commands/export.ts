@@ -2,7 +2,11 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type { ExportResult, NumberMapping } from '../types/index'
 import { createLogger } from '../utils/logger.js'
-import { loadMapping, transformFilename } from '../utils/mapper.js'
+import {
+  extractCategory,
+  loadMapping,
+  transformFilename,
+} from '../utils/mapper.js'
 import { loadNumberMapping } from '../utils/numberMapping.js'
 
 interface ExportCommandOptions {
@@ -89,27 +93,41 @@ export async function exportCommand(
       continue
     }
 
-    const destPath = path.join(toDir, newName)
+    // カテゴリを抽出してサブディレクトリパスを構築
+    const category = extractCategory(newName)
+    if (!category) {
+      result.skippedFiles.push({ file: srcPath, reason: 'no category found' })
+      logger.debug('export', `Skipped (no category): ${srcPath}`)
+      continue
+    }
+
+    const categoryDir = path.join(toDir, category)
+    const destPath = path.join(categoryDir, newName)
+    const relativePath = path.join(category, newName)
 
     // 既存ファイルのチェック
     if (!options.overwrite && fs.existsSync(destPath)) {
       result.skippedFiles.push({ file: srcPath, reason: 'already exists' })
       logger.debug(
         'export',
-        `Skipped (already exists): ${srcPath} -> ${newName}`,
+        `Skipped (already exists): ${srcPath} -> ${relativePath}`,
       )
       continue
     }
 
     if (!options.dryRun) {
+      // カテゴリディレクトリを作成
+      if (!fs.existsSync(categoryDir)) {
+        fs.mkdirSync(categoryDir, { recursive: true })
+      }
       // ファイルをコピー
       fs.copyFileSync(srcPath, destPath)
     }
 
-    result.copiedFiles.push({ from: srcPath, to: newName })
+    result.copiedFiles.push({ from: srcPath, to: relativePath })
     logger.info(
       'export',
-      `${options.dryRun ? '[DRY-RUN] ' : ''}Copied: ${srcPath} -> ${newName}`,
+      `${options.dryRun ? '[DRY-RUN] ' : ''}Copied: ${srcPath} -> ${relativePath}`,
     )
   }
 
