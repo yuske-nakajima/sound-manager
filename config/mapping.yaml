@@ -20,6 +20,9 @@ ride: RD
 crash: CR
 shaker: SK
 tambourine: TB
+tamb: TB
+cowbell: CB
+drums: DM
 perc: PC
 
 # ベース系
@@ -39,11 +42,19 @@ stab: ST
 trumpet: TP
 brass: BR
 horn: HR
+sax: SX
+saxophone: SX
 
 # エフェクト系
 fx: FX
 riser: RS
 impact: IM
+hit: IM
+slam: IM
+boom: IM
+bang: IM
+beep: FX
+ting: FX
 noise: NS
 ambient: AM
 firework: FX
@@ -53,15 +64,44 @@ walk: FX
 foot: FX
 step: FX
 rain: AM
+bird: AM
+field_recording: AM
+powerup: FX
 
 # ボーカル系
 vocal: VO
 vox: VO
+voice: VO
 chop: CH
 
 # 弦楽器系
 violin: VN
 guitar: GT
+gtr: GT
+
+# 鍵盤系
+piano: PN
+keys: KY
+
+# ベル・チャイム系
+chime: BL
+bells: BL
+bell: BL
+
+# パーカッション系
+sansula: PC
+tongue_drum: PC
+kalimba: PC
+knock: PC
+wood: PC
+wooden: PC
+conga: PC
+bongo: PC
+marimba: PC
+xylophone: PC
+
+# メロディ系
+melody: ML
 
 # その他
 loop: LP

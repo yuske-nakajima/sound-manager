@@ -107,6 +107,7 @@ npm run start -- number ./sounds-b --json ./number-mapping.json
 
 番号管理 JSON ファイルに登録されたファイルを、マッピングルールに従って変換しながら出力先ディレクトリにコピーします。
 異なるディレクトリに散らばったファイルを一括でエクスポートできます。
+ファイルはカテゴリ（マッピング先の名称）ごとにサブディレクトリに分けて配置されます。
 
 ```bash
 # 基本的な使い方
@@ -144,8 +145,8 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 # 📄 マッピング: /path/to/config/mapping.yaml
 #
 # ✅ コピー済み:
-#   /sounds-a/hihat_Am_sample__0001.wav → HH_Am__0001.wav
-#   /sounds-b/kick_heavy__0002.mp3 → KK__0002.mp3
+#   /sounds-a/hihat_Am_sample__0001.wav → HH/HH_Am__0001.wav
+#   /sounds-b/kick_heavy__0002.mp3 → KK/KK__0002.mp3
 #
 # ⏭️ スキップ:
 #   /sounds-a/unknown_sample__0003.wav (no mapping found)
@@ -154,22 +155,45 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 # 📊 結果: 2 ファイルをコピー, 2 ファイルをスキップ
 ```
 
+#### 出力ディレクトリ構造
+
+エクスポート後のディレクトリ構造は以下のようになります：
+
+```
+output/
+├── HH/
+│   ├── HH_Am__0001.wav
+│   └── HH__0010.wav
+├── KK/
+│   └── KK__0002.mp3
+├── SN/
+│   └── SN__0003.wav
+├── BS/
+│   └── BS_Cm__0004.wav
+├── LP-D/
+│   └── LP-D-120__0005.wav
+└── LP-M/
+    └── LP-M-100__0006.wav
+```
+
 #### 動作仕様
 
 1. 番号管理 JSON に登録されたファイルがエクスポート対象
 2. 各ファイルの `directory` フィールドからソースパスを特定
 3. マッピングルールに一致しないファイルはスキップ
 4. ファイル名に含まれる音楽キー（Am, C#, Bbm など）は保持される
-5. 出力先に同名ファイルがある場合はスキップ（`--overwrite` で上書き可）
-6. 存在しないファイル（削除済みなど）はスキップ
+5. カテゴリ（マッピング先の名称）ごとにサブディレクトリを自動作成
+6. 出力先に同名ファイルがある場合はスキップ（`--overwrite` で上書き可）
+7. 存在しないファイル（削除済みなど）はスキップ
 
 #### ファイル名変換の例
 
-| 変換前 | 変換後 | 説明 |
-|--------|--------|------|
-| `hihat_Am_sample__0001.wav` | `HH_Am__0001.wav` | hihat → HH, キー Am を保持 |
-| `kick_heavy__0002.mp3` | `KK__0002.mp3` | kick → KK, キーなし |
-| `bass_Cm_loop__0010.wav` | `BS_Cm__0010.wav` | bass → BS, キー Cm を保持 |
+| 変換前 | 変換後 | 配置先 | 説明 |
+|--------|--------|--------|------|
+| `hihat_Am_sample__0001.wav` | `HH_Am__0001.wav` | `HH/` | hihat → HH, キー Am を保持 |
+| `kick_heavy__0002.mp3` | `KK__0002.mp3` | `KK/` | kick → KK, キーなし |
+| `bass_Cm_loop__0010.wav` | `LP-M-120__0010.wav` | `LP-M/` | ループ判定、BPM 120 |
+| `drum_120_loop__0005.wav` | `LP-D-120__0005.wav` | `LP-D/` | ドラムループ、BPM 120 |
 
 ---
 
@@ -181,7 +205,7 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 - **値**: 変換後のカテゴリ名
 - **最長一致**: `hihat_open` と `hihat` の両方が定義されている場合、より長い `hihat_open` が優先
 
-### 現在のマッピング一覧（更新日: 2025-12-05）
+### 現在のマッピング一覧（更新日: 2025-12-20）
 
 #### ドラム系
 
@@ -204,6 +228,9 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 | crash | CR | クラッシュ |
 | shaker | SK | シェイカー |
 | tambourine | TB | タンバリン |
+| tamb | TB | タンバリン（略称） |
+| cowbell | CB | カウベル |
+| drums | DM | ドラム |
 | perc | PC | パーカッション |
 
 #### ベース系
@@ -225,13 +252,15 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 | pluck | PL | プラック |
 | stab | ST | スタブ |
 
-#### ブラス系
+#### ブラス・管楽器系
 
 | キーワード | 変換後 | 説明 |
 |-----------|--------|------|
 | trumpet | TP | トランペット |
 | brass | BR | ブラス |
 | horn | HR | ホルン |
+| sax | SX | サックス |
+| saxophone | SX | サックス |
 
 #### エフェクト系
 
@@ -240,6 +269,12 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 | fx | FX | エフェクト |
 | riser | RS | ライザー |
 | impact | IM | インパクト |
+| hit | IM | ヒット |
+| slam | IM | スラム |
+| boom | IM | ブーム |
+| bang | IM | バング |
+| beep | FX | ビープ |
+| ting | FX | ティング |
 | noise | NS | ノイズ |
 | ambient | AM | アンビエント |
 | firework | FX | 花火 |
@@ -249,6 +284,9 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 | foot | FX | 足音 |
 | step | FX | 足音 |
 | rain | AM | 雨 |
+| bird | AM | 鳥 |
+| field_recording | AM | フィールドレコーディング |
+| powerup | FX | パワーアップ音 |
 
 #### ボーカル系
 
@@ -256,6 +294,7 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 |-----------|--------|------|
 | vocal | VO | ボーカル |
 | vox | VO | ボーカル |
+| voice | VO | ボイス |
 | chop | CH | チョップ |
 
 #### 弦楽器系
@@ -264,6 +303,43 @@ npm run start -- export --json ./number-mapping.json ./output --overwrite
 |-----------|--------|------|
 | violin | VN | バイオリン |
 | guitar | GT | ギター |
+| gtr | GT | ギター（略称） |
+
+#### 鍵盤系
+
+| キーワード | 変換後 | 説明 |
+|-----------|--------|------|
+| piano | PN | ピアノ |
+| keys | KY | キーボード |
+
+#### ベル・チャイム系
+
+| キーワード | 変換後 | 説明 |
+|-----------|--------|------|
+| chime | BL | チャイム |
+| bells | BL | ベル |
+| bell | BL | ベル |
+
+#### パーカッション系
+
+| キーワード | 変換後 | 説明 |
+|-----------|--------|------|
+| sansula | PC | サンスラ |
+| tongue_drum | PC | タングドラム |
+| kalimba | PC | カリンバ |
+| knock | PC | ノック |
+| wood | PC | ウッド |
+| wooden | PC | ウッド |
+| conga | PC | コンガ |
+| bongo | PC | ボンゴ |
+| marimba | PC | マリンバ |
+| xylophone | PC | シロフォン |
+
+#### メロディ系
+
+| キーワード | 変換後 | 説明 |
+|-----------|--------|------|
+| melody | ML | メロディ |
 
 #### その他
 

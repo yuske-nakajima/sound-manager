@@ -98,6 +98,31 @@ function transformLoopFilename(
 }
 
 /**
+ * 変換後のファイル名からカテゴリを抽出
+ * @param filename 変換後のファイル名 (例: HH_Am__0001.wav, LP-D-120__0001.wav)
+ * @returns カテゴリ (例: HH, LP-D) または null
+ */
+export function extractCategory(filename: string): string | null {
+  if (!filename) {
+    return null
+  }
+
+  // ループファイル: LP-D-120__0001.wav または LP-D__0001.wav
+  const loopMatch = filename.match(/^(LP-[DM])(?:-\d+)?__\d{4}\.\w+$/)
+  if (loopMatch?.[1]) {
+    return loopMatch[1]
+  }
+
+  // 通常ファイル: HH_Am__0001.wav または HH__0001.wav または HH_Cmaj7__0001.wav
+  const normalMatch = filename.match(/^([A-Z]+)(?:_[A-Za-z#0-9]+)?__\d{4}\.\w+$/)
+  if (normalMatch?.[1]) {
+    return normalMatch[1]
+  }
+
+  return null
+}
+
+/**
  * ループでないファイルの変換（既存ロジック）
  */
 function transformNonLoopFilename(
