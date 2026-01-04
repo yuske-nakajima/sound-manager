@@ -158,6 +158,65 @@ describe('numberCommand', () => {
       })
     })
 
+    it('既にJSONに登録済みのファイルはスキップされる（重複防止）', async () => {
+      // 既存のJSONにファイルが登録済み
+      const existingMapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': { originalName: 'sample.wav', directory: TEST_DIR },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(existingMapping), 'utf-8')
+      // 同じファイルがまだ存在する
+      fs.writeFileSync(path.join(TEST_DIR, 'sample.wav'), '')
+
+      const result = await numberCommand(TEST_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      // 登録済みファイルは登録されない
+      expect(result.registeredFiles).toHaveLength(0)
+      expect(result.skippedFiles).toContain('sample.wav')
+
+      // JSONは変更されない
+      const content = fs.readFileSync(JSON_PATH, 'utf-8')
+      const mapping = JSON.parse(content) as NumberMapping
+      expect(mapping.lastNumber).toBe(1)
+      expect(Object.keys(mapping.mappings)).toHaveLength(1)
+    })
+
+    it('複数回実行しても重複登録されない', async () => {
+      fs.writeFileSync(path.join(TEST_DIR, 'a.wav'), '')
+      fs.writeFileSync(path.join(TEST_DIR, 'b.wav'), '')
+
+      // 1回目の実行
+      await numberCommand(TEST_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      // 2回目の実行
+      const result2 = await numberCommand(TEST_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      // 2回目は何も登録されない
+      expect(result2.registeredFiles).toHaveLength(0)
+      expect(result2.skippedFiles).toHaveLength(2)
+
+      // JSONには2件のみ
+      const content = fs.readFileSync(JSON_PATH, 'utf-8')
+      const mapping = JSON.parse(content) as NumberMapping
+      expect(mapping.lastNumber).toBe(2)
+      expect(Object.keys(mapping.mappings)).toHaveLength(2)
+    })
+
     it('異なるディレクトリからの採番で重複しない', async () => {
       const dir1 = path.join(TEST_DIR, 'dir1')
       const dir2 = path.join(TEST_DIR, 'dir2')

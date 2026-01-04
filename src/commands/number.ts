@@ -1,5 +1,5 @@
 import * as fs from 'node:fs'
-import type { NumberResult } from '../types/index'
+import type { NumberMapping, NumberResult } from '../types/index'
 import { getAudioFiles, hasNumberSuffix } from '../utils/fileUtils.js'
 import { createLogger } from '../utils/logger.js'
 import {
@@ -12,6 +12,23 @@ interface NumberOptions {
   jsonPath: string
   dryRun: boolean
   logDir: string
+}
+
+/**
+ * ファイルが既にマッピングに登録済みかチェック
+ * O(n) で全エントリを走査
+ */
+function isAlreadyRegistered(
+  mapping: NumberMapping,
+  fileName: string,
+  directory: string,
+): boolean {
+  for (const entry of Object.values(mapping.mappings)) {
+    if (entry.originalName === fileName && entry.directory === directory) {
+      return true
+    }
+  }
+  return false
 }
 
 /**
@@ -50,10 +67,17 @@ export async function numberCommand(
   const sortedFiles = [...files].sort()
 
   for (const file of sortedFiles) {
-    // 既に採番済みならスキップ
+    // 既に採番済みならスキップ（ファイル名にサフィックスがある場合）
     if (hasNumberSuffix(file)) {
       result.skippedFiles.push(file)
       logger.debug('number', `Skipped (already numbered): ${file}`)
+      continue
+    }
+
+    // 既にJSONに登録済みならスキップ（重複防止）
+    if (isAlreadyRegistered(mapping, file, dirPath)) {
+      result.skippedFiles.push(file)
+      logger.debug('number', `Skipped (already registered): ${file}`)
       continue
     }
 
