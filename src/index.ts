@@ -49,10 +49,10 @@ program
         process.exit(1)
       }
 
-      if (result.renamedFiles.length > 0) {
-        console.log('\n✅ マッピング済み:')
-        for (const { from, to } of result.renamedFiles) {
-          console.log(`  ${from} → ${to}`)
+      if (result.registeredFiles.length > 0) {
+        console.log('\n✅ 登録済み:')
+        for (const { file, numberKey } of result.registeredFiles) {
+          console.log(`  ${file} → ${numberKey}`)
         }
       }
 
@@ -64,7 +64,7 @@ program
       }
 
       console.log(
-        `\n📊 結果: ${result.renamedFiles.length} ファイルをマッピング, ${result.skippedFiles.length} ファイルをスキップ`,
+        `\n📊 結果: ${result.registeredFiles.length} ファイルを登録, ${result.skippedFiles.length} ファイルをスキップ`,
       )
     },
   )

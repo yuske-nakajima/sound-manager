@@ -72,11 +72,8 @@ export async function exportCommand(
   for (const [numberKey, entry] of Object.entries(numberMapping.mappings)) {
     const { originalName, directory } = entry
 
-    // 採番後のファイル名を構築
-    const ext = path.extname(originalName)
-    const baseName = path.basename(originalName, ext)
-    const numberedFileName = `${baseName}__${numberKey}${ext}`
-    const srcPath = path.join(directory, numberedFileName)
+    // 元のファイル名でソースパスを構築（ファイル名は変更されていない）
+    const srcPath = path.join(directory, originalName)
 
     // ソースファイルの存在確認
     if (!fs.existsSync(srcPath)) {
@@ -85,8 +82,8 @@ export async function exportCommand(
       continue
     }
 
-    // ファイル名を変換
-    const newName = transformFilename(numberedFileName, categoryMapping)
+    // ファイル名を変換（元のファイル名と連番キーを渡す）
+    const newName = transformFilename(originalName, categoryMapping, numberKey)
     if (!newName) {
       result.skippedFiles.push({ file: srcPath, reason: 'no mapping found' })
       logger.debug('export', `Skipped (no mapping): ${srcPath}`)

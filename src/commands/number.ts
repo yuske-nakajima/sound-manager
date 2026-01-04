@@ -1,11 +1,6 @@
 import * as fs from 'node:fs'
-import * as path from 'node:path'
 import type { NumberResult } from '../types/index'
-import {
-  addNumberSuffix,
-  getAudioFiles,
-  hasNumberSuffix,
-} from '../utils/fileUtils.js'
+import { getAudioFiles, hasNumberSuffix } from '../utils/fileUtils.js'
 import { createLogger } from '../utils/logger.js'
 import {
   formatNumber,
@@ -21,15 +16,15 @@ interface NumberOptions {
 
 /**
  * 採番コマンド
- * 指定ディレクトリ内の音声ファイルに連番を付与する
- * 番号はJSONファイルで一元管理し、重複を防ぐ
+ * 指定ディレクトリ内の音声ファイルに連番を割り当ててJSONに記録する
+ * ファイル名は変更せず、元のファイル名を保持する
  */
 export async function numberCommand(
   dirPath: string,
   options: NumberOptions,
 ): Promise<NumberResult> {
   const result: NumberResult = {
-    renamedFiles: [],
+    registeredFiles: [],
     skippedFiles: [],
     errors: [],
   }
@@ -64,16 +59,10 @@ export async function numberCommand(
 
     // 次の番号を割り当て
     currentNumber++
-    const newName = addNumberSuffix(file, currentNumber)
     const numberKey = formatNumber(currentNumber)
 
     if (!options.dryRun) {
-      // 実際にリネーム
-      const oldPath = path.join(dirPath, file)
-      const newPath = path.join(dirPath, newName)
-      fs.renameSync(oldPath, newPath)
-
-      // マッピングに追記
+      // マッピングに追記（ファイル名は変更しない）
       mapping.mappings[numberKey] = {
         originalName: file,
         directory: dirPath,
@@ -81,15 +70,15 @@ export async function numberCommand(
       mapping.lastNumber = currentNumber
     }
 
-    result.renamedFiles.push({ from: file, to: newName })
+    result.registeredFiles.push({ file, numberKey })
     logger.info(
       'number',
-      `${options.dryRun ? '[DRY-RUN] ' : ''}Renamed: ${file} -> ${newName}`,
+      `${options.dryRun ? '[DRY-RUN] ' : ''}Registered: ${file} -> ${numberKey}`,
     )
   }
 
   // JSONファイルを保存（dry-run時は保存しない）
-  if (!options.dryRun && result.renamedFiles.length > 0) {
+  if (!options.dryRun && result.registeredFiles.length > 0) {
     saveNumberMapping(options.jsonPath, mapping)
     logger.info('number', `Saved mapping to: ${options.jsonPath}`)
   }

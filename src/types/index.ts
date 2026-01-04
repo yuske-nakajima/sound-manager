@@ -4,9 +4,9 @@ export type SupportedExtension = (typeof SUPPORTED_EXTENSIONS)[number]
 
 // 採番コマンドの結果
 export interface NumberResult {
-  renamedFiles: Array<{
-    from: string
-    to: string
+  registeredFiles: Array<{
+    file: string
+    numberKey: string
   }>
   skippedFiles: string[]
   errors: string[]
