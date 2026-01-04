@@ -119,6 +119,56 @@ snare: SN
     })
   })
 
+  describe('transformFilename - アーティスト変換', () => {
+    it('アーティストファイルはディレクトリ構造を含むパスに変換', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'artist_shiina-ringo_kohukuron_133.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('artist/shiina-ringo/kohukuron_133.wav')
+    })
+
+    it('大文字の ARTIST_ でも変換する', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'ARTIST_Band-Name_Song_120.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('artist/Band-Name/Song_120.wav')
+    })
+
+    it('アーティスト MP3 ファイルも変換する', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'artist_test_track_90.mp3',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('artist/test/track_90.mp3')
+    })
+
+    it('不正なアーティストファイルは null を返す', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'artist_invalid.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBeNull()
+    })
+  })
+
   describe('transformFilename - ループ変換', () => {
     it('ドラムループ（BPMあり）は LP-D-{BPM} 形式に変換', () => {
       const mapping = new Map([['loop', 'LP']])

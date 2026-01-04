@@ -144,6 +144,43 @@ bass: BS
       expect(result.copiedFiles[0]?.to).toBe(path.join('KK', 'KK__0002.mp3'))
       expect(fs.existsSync(path.join(TO_DIR, 'KK', 'KK__0002.mp3'))).toBe(true)
     })
+
+    it('アーティストファイルはディレクトリ構造を維持してコピーされる', async () => {
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'artist_shiina-ringo_kohukuron_133.wav'),
+        'data',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'artist_shiina-ringo_kohukuron_133.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(1)
+      expect(result.copiedFiles[0]?.to).toBe(
+        path.join('artist', 'shiina-ringo', 'kohukuron_133.wav'),
+      )
+      expect(
+        fs.existsSync(
+          path.join(TO_DIR, 'artist', 'shiina-ringo', 'kohukuron_133.wav'),
+        ),
+      ).toBe(true)
+    })
   })
 
   describe('スキップケース', () => {

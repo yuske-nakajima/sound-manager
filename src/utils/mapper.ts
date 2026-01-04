@@ -1,6 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as YAML from 'yaml'
+import { isArtist, transformArtistFilename } from './artistDetector.js'
 import { detectBpm } from './bpmDetector.js'
 import { isDrum } from './drumDetector.js'
 import { detectKey } from './keyDetector.js'
@@ -57,6 +58,11 @@ export function transformFilename(
   mapping: Map<string, string>,
   numberKey: string,
 ): string | null {
+  // アーティスト判定（最優先）
+  if (isArtist(originalFilename)) {
+    return transformArtistFilename(originalFilename)
+  }
+
   const ext = path.extname(originalFilename).slice(1) // .wav -> wav
 
   // ループ判定
