@@ -19,7 +19,7 @@ describe('numberCommand', () => {
   })
 
   describe('正常系', () => {
-    it('未採番ファイルに番号が付与される', async () => {
+    it('未採番ファイルが登録される（ファイル名は変更されない）', async () => {
       fs.writeFileSync(path.join(TEST_DIR, 'sample.wav'), '')
 
       const result = await numberCommand(TEST_DIR, {
@@ -28,14 +28,14 @@ describe('numberCommand', () => {
         logDir: LOG_DIR,
       })
 
-      expect(result.renamedFiles).toHaveLength(1)
-      expect(result.renamedFiles[0]?.from).toBe('sample.wav')
-      expect(result.renamedFiles[0]?.to).toBe('sample__0001.wav')
-      expect(fs.existsSync(path.join(TEST_DIR, 'sample__0001.wav'))).toBe(true)
-      expect(fs.existsSync(path.join(TEST_DIR, 'sample.wav'))).toBe(false)
+      expect(result.registeredFiles).toHaveLength(1)
+      expect(result.registeredFiles[0]?.file).toBe('sample.wav')
+      expect(result.registeredFiles[0]?.numberKey).toBe('0001')
+      // ファイル名は変更されない
+      expect(fs.existsSync(path.join(TEST_DIR, 'sample.wav'))).toBe(true)
     })
 
-    it('mp3 ファイルにも番号が付与される', async () => {
+    it('mp3 ファイルも登録される', async () => {
       fs.writeFileSync(path.join(TEST_DIR, 'sample.mp3'), '')
 
       const result = await numberCommand(TEST_DIR, {
@@ -44,8 +44,9 @@ describe('numberCommand', () => {
         logDir: LOG_DIR,
       })
 
-      expect(result.renamedFiles).toHaveLength(1)
-      expect(result.renamedFiles[0]?.to).toBe('sample__0001.mp3')
+      expect(result.registeredFiles).toHaveLength(1)
+      expect(result.registeredFiles[0]?.file).toBe('sample.mp3')
+      expect(result.registeredFiles[0]?.numberKey).toBe('0001')
     })
 
     it('JSON の lastNumber + 1 から開始', async () => {
@@ -66,8 +67,8 @@ describe('numberCommand', () => {
         logDir: LOG_DIR,
       })
 
-      expect(result.renamedFiles).toHaveLength(1)
-      expect(result.renamedFiles[0]?.to).toBe('new__0011.wav')
+      expect(result.registeredFiles).toHaveLength(1)
+      expect(result.registeredFiles[0]?.numberKey).toBe('0011')
     })
 
     it('既に採番済みのファイルはスキップされる', async () => {
@@ -79,7 +80,7 @@ describe('numberCommand', () => {
         logDir: LOG_DIR,
       })
 
-      expect(result.renamedFiles).toHaveLength(0)
+      expect(result.registeredFiles).toHaveLength(0)
       expect(result.skippedFiles).toContain('a__0001.wav')
     })
 
@@ -94,11 +95,15 @@ describe('numberCommand', () => {
         logDir: LOG_DIR,
       })
 
-      expect(result.renamedFiles).toHaveLength(3)
-      const toNames = result.renamedFiles.map((r) => r.to).sort()
-      expect(toNames).toContain('a__0001.wav')
-      expect(toNames).toContain('b__0002.mp3')
-      expect(toNames).toContain('c__0003.wav')
+      expect(result.registeredFiles).toHaveLength(3)
+      const files = result.registeredFiles.map((r) => r.file).sort()
+      expect(files).toContain('a.wav')
+      expect(files).toContain('b.mp3')
+      expect(files).toContain('c.wav')
+      const numberKeys = result.registeredFiles.map((r) => r.numberKey).sort()
+      expect(numberKeys).toContain('0001')
+      expect(numberKeys).toContain('0002')
+      expect(numberKeys).toContain('0003')
     })
   })
 
@@ -153,6 +158,65 @@ describe('numberCommand', () => {
       })
     })
 
+    it('既にJSONに登録済みのファイルはスキップされる（重複防止）', async () => {
+      // 既存のJSONにファイルが登録済み
+      const existingMapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': { originalName: 'sample.wav', directory: TEST_DIR },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(existingMapping), 'utf-8')
+      // 同じファイルがまだ存在する
+      fs.writeFileSync(path.join(TEST_DIR, 'sample.wav'), '')
+
+      const result = await numberCommand(TEST_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      // 登録済みファイルは登録されない
+      expect(result.registeredFiles).toHaveLength(0)
+      expect(result.skippedFiles).toContain('sample.wav')
+
+      // JSONは変更されない
+      const content = fs.readFileSync(JSON_PATH, 'utf-8')
+      const mapping = JSON.parse(content) as NumberMapping
+      expect(mapping.lastNumber).toBe(1)
+      expect(Object.keys(mapping.mappings)).toHaveLength(1)
+    })
+
+    it('複数回実行しても重複登録されない', async () => {
+      fs.writeFileSync(path.join(TEST_DIR, 'a.wav'), '')
+      fs.writeFileSync(path.join(TEST_DIR, 'b.wav'), '')
+
+      // 1回目の実行
+      await numberCommand(TEST_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      // 2回目の実行
+      const result2 = await numberCommand(TEST_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      // 2回目は何も登録されない
+      expect(result2.registeredFiles).toHaveLength(0)
+      expect(result2.skippedFiles).toHaveLength(2)
+
+      // JSONには2件のみ
+      const content = fs.readFileSync(JSON_PATH, 'utf-8')
+      const mapping = JSON.parse(content) as NumberMapping
+      expect(mapping.lastNumber).toBe(2)
+      expect(Object.keys(mapping.mappings)).toHaveLength(2)
+    })
+
     it('異なるディレクトリからの採番で重複しない', async () => {
       const dir1 = path.join(TEST_DIR, 'dir1')
       const dir2 = path.join(TEST_DIR, 'dir2')
@@ -180,13 +244,14 @@ describe('numberCommand', () => {
       expect(mapping.lastNumber).toBe(2)
       expect(mapping.mappings['0001']?.directory).toBe(dir1)
       expect(mapping.mappings['0002']?.directory).toBe(dir2)
-      expect(fs.existsSync(path.join(dir1, 'a__0001.wav'))).toBe(true)
-      expect(fs.existsSync(path.join(dir2, 'b__0002.wav'))).toBe(true)
+      // ファイル名は変更されない
+      expect(fs.existsSync(path.join(dir1, 'a.wav'))).toBe(true)
+      expect(fs.existsSync(path.join(dir2, 'b.wav'))).toBe(true)
     })
   })
 
   describe('dry-run モード', () => {
-    it('dry-run モードでファイルは変更されない', async () => {
+    it('dry-run モードで登録情報が返される', async () => {
       fs.writeFileSync(path.join(TEST_DIR, 'sample.wav'), '')
 
       const result = await numberCommand(TEST_DIR, {
@@ -195,9 +260,10 @@ describe('numberCommand', () => {
         logDir: LOG_DIR,
       })
 
-      expect(result.renamedFiles).toHaveLength(1)
+      expect(result.registeredFiles).toHaveLength(1)
+      expect(result.registeredFiles[0]?.file).toBe('sample.wav')
+      expect(result.registeredFiles[0]?.numberKey).toBe('0001')
       expect(fs.existsSync(path.join(TEST_DIR, 'sample.wav'))).toBe(true)
-      expect(fs.existsSync(path.join(TEST_DIR, 'sample__0001.wav'))).toBe(false)
     })
 
     it('dry-run モードで JSON ファイルは更新されない', async () => {

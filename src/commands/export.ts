@@ -72,11 +72,8 @@ export async function exportCommand(
   for (const [numberKey, entry] of Object.entries(numberMapping.mappings)) {
     const { originalName, directory } = entry
 
-    // 採番後のファイル名を構築
-    const ext = path.extname(originalName)
-    const baseName = path.basename(originalName, ext)
-    const numberedFileName = `${baseName}__${numberKey}${ext}`
-    const srcPath = path.join(directory, numberedFileName)
+    // 元のファイル名でソースパスを構築（ファイル名は変更されていない）
+    const srcPath = path.join(directory, originalName)
 
     // ソースファイルの存在確認
     if (!fs.existsSync(srcPath)) {
@@ -85,25 +82,37 @@ export async function exportCommand(
       continue
     }
 
-    // ファイル名を変換
-    const newName = transformFilename(numberedFileName, categoryMapping)
+    // ファイル名を変換（元のファイル名と連番キーを渡す）
+    const newName = transformFilename(originalName, categoryMapping, numberKey)
     if (!newName) {
       result.skippedFiles.push({ file: srcPath, reason: 'no mapping found' })
       logger.debug('export', `Skipped (no mapping): ${srcPath}`)
       continue
     }
 
-    // カテゴリを抽出してサブディレクトリパスを構築
-    const category = extractCategory(newName)
-    if (!category) {
-      result.skippedFiles.push({ file: srcPath, reason: 'no category found' })
-      logger.debug('export', `Skipped (no category): ${srcPath}`)
-      continue
-    }
+    // 出力先パスを構築
+    let destPath: string
+    let relativePath: string
+    let destDir: string
 
-    const categoryDir = path.join(toDir, category)
-    const destPath = path.join(categoryDir, newName)
-    const relativePath = path.join(category, newName)
+    // newName にパス区切りが含まれる場合（アーティストファイルなど）
+    if (newName.includes('/') || newName.includes(path.sep)) {
+      // 既にディレクトリ構造が含まれているので、そのまま使用
+      destPath = path.join(toDir, newName)
+      relativePath = newName
+      destDir = path.dirname(destPath)
+    } else {
+      // 従来の処理: カテゴリを抽出してサブディレクトリパスを構築
+      const category = extractCategory(newName)
+      if (!category) {
+        result.skippedFiles.push({ file: srcPath, reason: 'no category found' })
+        logger.debug('export', `Skipped (no category): ${srcPath}`)
+        continue
+      }
+      destDir = path.join(toDir, category)
+      destPath = path.join(destDir, newName)
+      relativePath = path.join(category, newName)
+    }
 
     // 既存ファイルのチェック
     if (!options.overwrite && fs.existsSync(destPath)) {
@@ -116,9 +125,9 @@ export async function exportCommand(
     }
 
     if (!options.dryRun) {
-      // カテゴリディレクトリを作成
-      if (!fs.existsSync(categoryDir)) {
-        fs.mkdirSync(categoryDir, { recursive: true })
+      // 出力先ディレクトリを作成
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true })
       }
       // ファイルをコピー
       fs.copyFileSync(srcPath, destPath)

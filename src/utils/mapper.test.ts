@@ -89,7 +89,7 @@ snare: SN
     it('変換後のファイル名が正しい形式', () => {
       const mapping = new Map([['hihat', 'HH']])
 
-      const result = transformFilename('hihat_Am_sample__0001.wav', mapping)
+      const result = transformFilename('hihat_Am_sample.wav', mapping, '0001')
 
       expect(result).toBe('HH_Am__0001.wav')
     })
@@ -97,7 +97,7 @@ snare: SN
     it('キーがない場合も正しく変換する', () => {
       const mapping = new Map([['kick', 'KK']])
 
-      const result = transformFilename('kick_sample__0005.wav', mapping)
+      const result = transformFilename('kick_sample.wav', mapping, '0005')
 
       expect(result).toBe('KK__0005.wav')
     })
@@ -105,15 +105,7 @@ snare: SN
     it('マッピングがない場合は null を返す', () => {
       const mapping = new Map([['hihat', 'HH']])
 
-      const result = transformFilename('snare_sample__0001.wav', mapping)
-
-      expect(result).toBeNull()
-    })
-
-    it('番号サフィックスがない場合は null を返す', () => {
-      const mapping = new Map([['hihat', 'HH']])
-
-      const result = transformFilename('hihat_sample.wav', mapping)
+      const result = transformFilename('snare_sample.wav', mapping, '0001')
 
       expect(result).toBeNull()
     })
@@ -121,9 +113,59 @@ snare: SN
     it('mp3 ファイルも正しく変換する', () => {
       const mapping = new Map([['bass', 'BS']])
 
-      const result = transformFilename('bass_sample__0010.mp3', mapping)
+      const result = transformFilename('bass_sample.mp3', mapping, '0010')
 
       expect(result).toBe('BS__0010.mp3')
+    })
+  })
+
+  describe('transformFilename - アーティスト変換', () => {
+    it('アーティストファイルはディレクトリ構造を含むパスに変換', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'artist_shiina-ringo_kohukuron_133.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('artist/shiina-ringo/kohukuron_133.wav')
+    })
+
+    it('大文字の ARTIST_ でも変換する', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'ARTIST_Band-Name_Song_120.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('artist/Band-Name/Song_120.wav')
+    })
+
+    it('アーティスト MP3 ファイルも変換する', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'artist_test_track_90.mp3',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('artist/test/track_90.mp3')
+    })
+
+    it('不正なアーティストファイルは null を返す', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'artist_invalid.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBeNull()
     })
   })
 
@@ -132,8 +174,9 @@ snare: SN
       const mapping = new Map([['loop', 'LP']])
 
       const result = transformFilename(
-        '91V_PUKG_130_drum_top_loop__0001.wav',
+        '91V_PUKG_130_drum_top_loop.wav',
         mapping,
+        '0001',
       )
 
       expect(result).toBe('LP-D-130__0001.wav')
@@ -143,8 +186,9 @@ snare: SN
       const mapping = new Map([['loop', 'LP']])
 
       const result = transformFilename(
-        'DS_VPT_100_drum_full_machine__0002.wav',
+        'DS_VPT_100_drum_full_machine.wav',
         mapping,
+        '0002',
       )
 
       expect(result).toBe('LP-D-100__0002.wav')
@@ -154,8 +198,9 @@ snare: SN
       const mapping = new Map([['loop', 'LP']])
 
       const result = transformFilename(
-        'SLS_CSP_90_drum_kit_rnb__0008.wav',
+        'SLS_CSP_90_drum_kit_rnb.wav',
         mapping,
+        '0008',
       )
 
       expect(result).toBe('LP-D-90__0008.wav')
@@ -164,7 +209,11 @@ snare: SN
     it('その他ミュージックループは LP-M-{BPM} 形式に変換', () => {
       const mapping = new Map([['loop', 'LP']])
 
-      const result = transformFilename('synth_loop_100_pad__0001.wav', mapping)
+      const result = transformFilename(
+        'synth_loop_100_pad.wav',
+        mapping,
+        '0001',
+      )
 
       expect(result).toBe('LP-M-100__0001.wav')
     })
@@ -173,8 +222,9 @@ snare: SN
       const mapping = new Map([['loop', 'LP']])
 
       const result = transformFilename(
-        'bass_120_loop_groove__0005.wav',
+        'bass_120_loop_groove.wav',
         mapping,
+        '0005',
       )
 
       expect(result).toBe('LP-M-120__0005.wav')
@@ -183,7 +233,11 @@ snare: SN
     it('BPMなしのloopファイルはBPM部分を省略', () => {
       const mapping = new Map([['loop', 'LP']])
 
-      const result = transformFilename('drum_loop_groove__0001.wav', mapping)
+      const result = transformFilename(
+        'drum_loop_groove.wav',
+        mapping,
+        '0001',
+      )
 
       expect(result).toBe('LP-D__0001.wav')
     })
@@ -194,7 +248,7 @@ snare: SN
         ['kick', 'KK'],
       ])
 
-      const result = transformFilename('kick_sample__0001.wav', mapping)
+      const result = transformFilename('kick_sample.wav', mapping, '0001')
 
       expect(result).toBe('KK__0001.wav')
     })
@@ -205,7 +259,7 @@ snare: SN
         ['hihat', 'HH'],
       ])
 
-      const result = transformFilename('hihat_Am_sample__0001.wav', mapping)
+      const result = transformFilename('hihat_Am_sample.wav', mapping, '0001')
 
       expect(result).toBe('HH_Am__0001.wav')
     })

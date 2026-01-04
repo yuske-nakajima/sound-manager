@@ -1,8 +1,9 @@
 import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as YAML from 'yaml'
+import { isArtist, transformArtistFilename } from './artistDetector.js'
 import { detectBpm } from './bpmDetector.js'
 import { isDrum } from './drumDetector.js'
-import { hasNumberSuffix } from './fileUtils.js'
 import { detectKey } from './keyDetector.js'
 import { isLoop } from './loopDetector.js'
 
@@ -47,35 +48,30 @@ export function findMatch(
 
 /**
  * ファイル名を変換
- * @param filename ファイル名 (例: hihat_Am_sample__0001.wav)
+ * @param originalFilename 元のファイル名 (例: hihat_Am_sample.wav)
  * @param mapping マッピング
+ * @param numberKey 連番キー (例: 0001)
  * @returns 変換後のファイル名 (例: HH_Am__0001.wav) または null
  */
 export function transformFilename(
-  filename: string,
+  originalFilename: string,
   mapping: Map<string, string>,
+  numberKey: string,
 ): string | null {
-  // 番号サフィックスがなければ変換対象外
-  if (!hasNumberSuffix(filename)) {
-    return null
+  // アーティスト判定（最優先）
+  if (isArtist(originalFilename)) {
+    return transformArtistFilename(originalFilename)
   }
 
-  // 番号サフィックスを抽出
-  const numberMatch = filename.match(/__(\d{4})\.(\w+)$/)
-  if (!numberMatch?.[1] || !numberMatch[2]) {
-    return null
-  }
-
-  const number = numberMatch[1]
-  const ext = numberMatch[2]
+  const ext = path.extname(originalFilename).slice(1) // .wav -> wav
 
   // ループ判定
-  if (isLoop(filename)) {
-    return transformLoopFilename(filename, number, ext)
+  if (isLoop(originalFilename)) {
+    return transformLoopFilename(originalFilename, numberKey, ext)
   }
 
   // ループでない場合は既存のマッピングロジック
-  return transformNonLoopFilename(filename, mapping, number, ext)
+  return transformNonLoopFilename(originalFilename, mapping, numberKey, ext)
 }
 
 /**

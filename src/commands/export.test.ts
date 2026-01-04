@@ -38,11 +38,8 @@ bass: BS
 
   describe('正常系', () => {
     it('番号管理JSONに基づいてファイルがコピーされる', async () => {
-      // ソースファイルを作成（採番後のファイル名）
-      fs.writeFileSync(
-        path.join(SOURCE_DIR_A, 'hihat_sample__0001.wav'),
-        'data',
-      )
+      // ソースファイルを作成（元のファイル名のまま）
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample.wav'), 'data')
 
       // 番号管理JSONを作成
       const mapping: NumberMapping = {
@@ -68,15 +65,9 @@ bass: BS
     })
 
     it('異なるディレクトリのファイルを一括エクスポート', async () => {
-      // 異なるディレクトリにソースファイルを作成
-      fs.writeFileSync(
-        path.join(SOURCE_DIR_A, 'hihat_sample__0001.wav'),
-        'data1',
-      )
-      fs.writeFileSync(
-        path.join(SOURCE_DIR_B, 'kick_sample__0002.wav'),
-        'data2',
-      )
+      // 異なるディレクトリにソースファイルを作成（元のファイル名のまま）
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample.wav'), 'data1')
+      fs.writeFileSync(path.join(SOURCE_DIR_B, 'kick_sample.wav'), 'data2')
 
       // 番号管理JSONを作成
       const mapping: NumberMapping = {
@@ -103,10 +94,7 @@ bass: BS
     })
 
     it('キーが正しく抽出・変換される', async () => {
-      fs.writeFileSync(
-        path.join(SOURCE_DIR_A, 'bass_Am_sample__0005.wav'),
-        'data',
-      )
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'bass_Am_sample.wav'), 'data')
 
       const mapping: NumberMapping = {
         version: 1,
@@ -133,7 +121,7 @@ bass: BS
     })
 
     it('mp3 ファイルも正しくコピーされる', async () => {
-      fs.writeFileSync(path.join(SOURCE_DIR_A, 'kick_sample__0002.mp3'), 'data')
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'kick_sample.mp3'), 'data')
 
       const mapping: NumberMapping = {
         version: 1,
@@ -155,6 +143,43 @@ bass: BS
       expect(result.copiedFiles).toHaveLength(1)
       expect(result.copiedFiles[0]?.to).toBe(path.join('KK', 'KK__0002.mp3'))
       expect(fs.existsSync(path.join(TO_DIR, 'KK', 'KK__0002.mp3'))).toBe(true)
+    })
+
+    it('アーティストファイルはディレクトリ構造を維持してコピーされる', async () => {
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'artist_shiina-ringo_kohukuron_133.wav'),
+        'data',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'artist_shiina-ringo_kohukuron_133.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(1)
+      expect(result.copiedFiles[0]?.to).toBe(
+        path.join('artist', 'shiina-ringo', 'kohukuron_133.wav'),
+      )
+      expect(
+        fs.existsSync(
+          path.join(TO_DIR, 'artist', 'shiina-ringo', 'kohukuron_133.wav'),
+        ),
+      ).toBe(true)
     })
   })
 
@@ -184,10 +209,7 @@ bass: BS
     })
 
     it('マッピングなしファイルはスキップ', async () => {
-      fs.writeFileSync(
-        path.join(SOURCE_DIR_A, 'unknown_sample__0001.wav'),
-        'data',
-      )
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'unknown_sample.wav'), 'data')
 
       const mapping: NumberMapping = {
         version: 1,
@@ -215,7 +237,7 @@ bass: BS
     })
 
     it('既存ファイルはスキップ（overwrite=false）', async () => {
-      fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample__0001.wav'), 'new')
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample.wav'), 'new')
       // カテゴリディレクトリを作成して既存ファイルを配置
       fs.mkdirSync(path.join(TO_DIR, 'HH'), { recursive: true })
       fs.writeFileSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'), 'old')
@@ -250,7 +272,7 @@ bass: BS
 
   describe('overwrite オプション', () => {
     it('overwrite=true で既存ファイルを上書き', async () => {
-      fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample__0001.wav'), 'new')
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample.wav'), 'new')
       // カテゴリディレクトリを作成して既存ファイルを配置
       fs.mkdirSync(path.join(TO_DIR, 'HH'), { recursive: true })
       fs.writeFileSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'), 'old')
@@ -281,10 +303,7 @@ bass: BS
 
   describe('dry-run モード', () => {
     it('dry-run モードでファイルはコピーされない', async () => {
-      fs.writeFileSync(
-        path.join(SOURCE_DIR_A, 'hihat_sample__0001.wav'),
-        'data',
-      )
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'hihat_sample.wav'), 'data')
 
       const mapping: NumberMapping = {
         version: 1,
