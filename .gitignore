@@ -1,5 +1,6 @@
 .idea
 node_modules
+.mise.local.toml
 .DS_Store
 dist/
 logs/
