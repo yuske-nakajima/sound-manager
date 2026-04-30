@@ -12,7 +12,8 @@
     "rootDir": "./src",
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
