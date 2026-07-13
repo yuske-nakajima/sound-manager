@@ -38,7 +38,9 @@ describe('isArtist', () => {
 describe('parseArtistFilename', () => {
   describe('正常系', () => {
     it('基本形式を解析する', () => {
-      const result = parseArtistFilename('artist_shiina-ringo_kohukuron_133.wav')
+      const result = parseArtistFilename(
+        'artist_shiina-ringo_kohukuron_133.wav',
+      )
       expect(result).toEqual({
         artistName: 'shiina-ringo',
         trackName: 'kohukuron',
@@ -87,12 +89,16 @@ describe('parseArtistFilename', () => {
 describe('transformArtistFilename', () => {
   describe('正常系', () => {
     it('基本形式を変換する', () => {
-      const result = transformArtistFilename('artist_shiina-ringo_kohukuron_133.wav')
+      const result = transformArtistFilename(
+        'artist_shiina-ringo_kohukuron_133.wav',
+      )
       expect(result).toBe('artist/shiina-ringo/kohukuron_133.wav')
     })
 
     it('大文字を含む形式を変換する', () => {
-      const result = transformArtistFilename('ARTIST_Band-Name_Song-Title_120.wav')
+      const result = transformArtistFilename(
+        'ARTIST_Band-Name_Song-Title_120.wav',
+      )
       expect(result).toBe('artist/Band-Name/Song-Title_120.wav')
     })
 
