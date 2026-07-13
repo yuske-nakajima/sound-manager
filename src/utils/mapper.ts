@@ -110,7 +110,9 @@ export function extractCategory(filename: string): string | null {
   }
 
   // 通常ファイル: HH_Am__0001.wav または HH__0001.wav または HH_Cmaj7__0001.wav
-  const normalMatch = filename.match(/^([A-Z]+)(?:_[A-Za-z#0-9]+)?__\d{4}\.\w+$/)
+  const normalMatch = filename.match(
+    /^([A-Z]+)(?:_[A-Za-z#0-9]+)?__\d{4}\.\w+$/,
+  )
   if (normalMatch?.[1]) {
     return normalMatch[1]
   }

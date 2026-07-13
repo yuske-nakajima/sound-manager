@@ -159,11 +159,7 @@ snare: SN
     it('不正なアーティストファイルは null を返す', () => {
       const mapping = new Map([['hihat', 'HH']])
 
-      const result = transformFilename(
-        'artist_invalid.wav',
-        mapping,
-        '0001',
-      )
+      const result = transformFilename('artist_invalid.wav', mapping, '0001')
 
       expect(result).toBeNull()
     })
@@ -233,11 +229,7 @@ snare: SN
     it('BPMなしのloopファイルはBPM部分を省略', () => {
       const mapping = new Map([['loop', 'LP']])
 
-      const result = transformFilename(
-        'drum_loop_groove.wav',
-        mapping,
-        '0001',
-      )
+      const result = transformFilename('drum_loop_groove.wav', mapping, '0001')
 
       expect(result).toBe('LP-D__0001.wav')
     })
