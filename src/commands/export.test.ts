@@ -173,13 +173,45 @@ bass: BS
 
       expect(result.copiedFiles).toHaveLength(1)
       expect(result.copiedFiles[0]?.to).toBe(
-        path.join('artist', 'shiina-ringo', 'kohukuron_133.wav'),
+        path.join('AT', 'shiina-ringo', 'kohukuron_133.wav'),
       )
       expect(
         fs.existsSync(
-          path.join(TO_DIR, 'artist', 'shiina-ringo', 'kohukuron_133.wav'),
+          path.join(TO_DIR, 'AT', 'shiina-ringo', 'kohukuron_133.wav'),
         ),
       ).toBe(true)
+    })
+
+    it('単音ファイルはディレクトリ構造を維持してコピーされる', async () => {
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'tone_guitar_C3.wav'), 'data')
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'tone_guitar_C3.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(1)
+      expect(result.copiedFiles[0]?.to).toBe(
+        path.join('CM', 'guitar', 'C3.wav'),
+      )
+      expect(fs.existsSync(path.join(TO_DIR, 'CM', 'guitar', 'C3.wav'))).toBe(
+        true,
+      )
     })
   })
 
@@ -206,6 +238,65 @@ bass: BS
       expect(result.copiedFiles).toHaveLength(0)
       expect(result.skippedFiles).toHaveLength(1)
       expect(result.skippedFiles[0]?.reason).toContain('file not found')
+    })
+
+    it('規則を外れた artist_ ファイルはスキップ（中間パーツを黙って捨てない）', async () => {
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'artist_band-name_song_title_120.wav'),
+        'data',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'artist_band-name_song_title_120.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(0)
+      expect(result.skippedFiles).toHaveLength(1)
+      expect(result.skippedFiles[0]?.reason).toContain('no mapping')
+    })
+
+    it('規則を外れた tone_ ファイルはスキップ（オクターブなし）', async () => {
+      fs.writeFileSync(path.join(SOURCE_DIR_A, 'tone_guitar_C.wav'), 'data')
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'tone_guitar_C.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(0)
+      expect(result.skippedFiles).toHaveLength(1)
+      expect(result.skippedFiles[0]?.reason).toContain('no mapping')
     })
 
     it('マッピングなしファイルはスキップ', async () => {
@@ -267,6 +358,55 @@ bass: BS
       expect(
         fs.readFileSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'), 'utf-8'),
       ).toBe('old')
+    })
+  })
+
+  describe('出力パス衝突', () => {
+    it('AT/ など番号サフィックスのない出力先に同名の参照元が解決される場合、overwrite=false では 2 件目以降がスキップされる', async () => {
+      // AT/CM の出力名には番号サフィックスが付かないため、異なるソースディレクトリの
+      // 同名アーティストファイルは同一の出力パスに解決される
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'artist_shiina-ringo_kohukuron_133.wav'),
+        'data-a',
+      )
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_B, 'artist_shiina-ringo_kohukuron_133.wav'),
+        'data-b',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 2,
+        mappings: {
+          '0001': {
+            originalName: 'artist_shiina-ringo_kohukuron_133.wav',
+            directory: SOURCE_DIR_A,
+          },
+          '0002': {
+            originalName: 'artist_shiina-ringo_kohukuron_133.wav',
+            directory: SOURCE_DIR_B,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(1)
+      expect(result.skippedFiles).toHaveLength(1)
+      expect(result.skippedFiles[0]?.reason).toContain('already exists')
+      expect(
+        fs.readFileSync(
+          path.join(TO_DIR, 'AT', 'shiina-ringo', 'kohukuron_133.wav'),
+          'utf-8',
+        ),
+      ).toBe('data-a')
     })
   })
 

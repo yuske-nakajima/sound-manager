@@ -6,6 +6,7 @@ import { detectBpm } from './bpmDetector.js'
 import { isDrum } from './drumDetector.js'
 import { detectKey } from './keyDetector.js'
 import { isLoop } from './loopDetector.js'
+import { isTone, transformToneFilename } from './toneDetector.js'
 
 /**
  * YAML ファイルからマッピングを読み込む
@@ -61,6 +62,13 @@ export function transformFilename(
   // アーティスト判定（最優先）
   if (isArtist(originalFilename)) {
     return transformArtistFilename(originalFilename)
+  }
+
+  // 単音（クロマチック用）判定
+  // ループ判定より前に置く。tone_synth_A3_120.wav のようにバリエーションが
+  // 数字のファイル名は、ループ判定が先に走ると BPM として誤解釈されるため
+  if (isTone(originalFilename)) {
+    return transformToneFilename(originalFilename)
   }
 
   const ext = path.extname(originalFilename).slice(1) // .wav -> wav
