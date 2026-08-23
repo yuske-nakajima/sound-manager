@@ -129,7 +129,7 @@ snare: SN
         '0001',
       )
 
-      expect(result).toBe('artist/shiina-ringo/kohukuron_133.wav')
+      expect(result).toBe('AT/shiina-ringo/kohukuron_133.wav')
     })
 
     it('大文字の ARTIST_ でも変換する', () => {
@@ -141,7 +141,7 @@ snare: SN
         '0001',
       )
 
-      expect(result).toBe('artist/Band-Name/Song_120.wav')
+      expect(result).toBe('AT/Band-Name/Song_120.wav')
     })
 
     it('アーティスト MP3 ファイルも変換する', () => {
@@ -153,7 +153,7 @@ snare: SN
         '0001',
       )
 
-      expect(result).toBe('artist/test/track_90.mp3')
+      expect(result).toBe('AT/test/track_90.mp3')
     })
 
     it('不正なアーティストファイルは null を返す', () => {
@@ -162,6 +162,80 @@ snare: SN
       const result = transformFilename('artist_invalid.wav', mapping, '0001')
 
       expect(result).toBeNull()
+    })
+  })
+
+  describe('transformFilename - 単音変換', () => {
+    it('単音ファイルはディレクトリ構造を含むパスに変換', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename('tone_guitar_C3.wav', mapping, '0001')
+
+      expect(result).toBe('CM/guitar/C3.wav')
+    })
+
+    it('フラット付きキーの単音ファイルはループ判定より前に単音判定される', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename('tone_bass_Bb2.wav', mapping, '0001')
+
+      expect(result).toBe('CM/bass/Bb2.wav')
+    })
+
+    it('バリエーションが数字でもループとして解釈されない（判定順序の回帰）', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename('tone_synth_A3_120.wav', mapping, '0001')
+
+      expect(result).toBe('CM/synth/A3_120.wav')
+    })
+
+    it('規則を外れた単音ファイルは null を返す', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename('tone_guitar_C.wav', mapping, '0001')
+
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('transformFilename - プレフィックス誤検出の回帰', () => {
+    it('tonearm_C3_sample.wav は tone_ として扱われずカテゴリ経路を通る', () => {
+      const mapping = new Map([['tonearm', 'TA']])
+
+      const result = transformFilename(
+        'tonearm_C3_sample.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('TA__0001.wav')
+    })
+
+    it('stone_C3.wav は artist_ / tone_ として扱われずカテゴリ経路を通る', () => {
+      const mapping = new Map([['stone', 'ST']])
+
+      const result = transformFilename('stone_C3.wav', mapping, '0001')
+
+      expect(result).toBe('ST__0001.wav')
+    })
+  })
+
+  describe('transformFilename - 既存挙動の非変更（回帰）', () => {
+    it('guitar_C3_clean.wav はキーが検出されずカテゴリのみで解決される', () => {
+      const mapping = new Map([['guitar', 'GT']])
+
+      const result = transformFilename('guitar_C3_clean.wav', mapping, '0001')
+
+      expect(result).toBe('GT__0001.wav')
+    })
+
+    it('hihat_Am_sample.wav はオクターブなしキー表記のまま変わらない', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename('hihat_Am_sample.wav', mapping, '0001')
+
+      expect(result).toBe('HH_Am__0001.wav')
     })
   })
 

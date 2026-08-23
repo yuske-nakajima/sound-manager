@@ -18,6 +18,10 @@ describe('isArtist', () => {
     it('混合ケース Artist_ でも検出する', () => {
       expect(isArtist('Artist_Name_Track_100.wav')).toBe(true)
     })
+
+    it('サブディレクトリを含むパスでもベース名で判定する', () => {
+      expect(isArtist('sub/artist_shiina-ringo_kohukuron_133.wav')).toBe(true)
+    })
   })
 
   describe('異常系', () => {
@@ -65,6 +69,19 @@ describe('parseArtistFilename', () => {
         bpm: 90,
       })
     })
+
+    it('.WAV / .MP3 大文字拡張子を解析する', () => {
+      expect(parseArtistFilename('artist_a_b_120.WAV')).toEqual({
+        artistName: 'a',
+        trackName: 'b',
+        bpm: 120,
+      })
+      expect(parseArtistFilename('artist_a_b_120.MP3')).toEqual({
+        artistName: 'a',
+        trackName: 'b',
+        bpm: 120,
+      })
+    })
   })
 
   describe('異常系', () => {
@@ -83,6 +100,48 @@ describe('parseArtistFilename', () => {
     it('空文字は null', () => {
       expect(parseArtistFilename('')).toBeNull()
     })
+
+    it('フィールド数が不足している場合は null（3 フィールド）', () => {
+      expect(parseArtistFilename('artist_name_120.wav')).toBeNull()
+    })
+
+    it('フィールド数が過多の場合は null（5 フィールド、中間パーツを黙って捨てない）', () => {
+      expect(
+        parseArtistFilename('artist_band-name_song_title_120.wav'),
+      ).toBeNull()
+    })
+
+    it('BPM が先頭ゼロの場合は null', () => {
+      expect(parseArtistFilename('artist_name_track_0120.wav')).toBeNull()
+    })
+
+    it('BPM が 0 のみの場合は null', () => {
+      expect(parseArtistFilename('artist_name_track_0.wav')).toBeNull()
+    })
+
+    it('BPM に数字以外の文字を含む場合は null', () => {
+      expect(parseArtistFilename('artist_name_track_120x.wav')).toBeNull()
+    })
+
+    it('アーティスト名が空文字の場合は null', () => {
+      expect(parseArtistFilename('artist__track_120.wav')).toBeNull()
+    })
+
+    it('曲名が空文字の場合は null', () => {
+      expect(parseArtistFilename('artist_name__120.wav')).toBeNull()
+    })
+
+    it('アーティスト名にハイフン以外の記号を含む場合は null', () => {
+      expect(parseArtistFilename('artist_na#me_track_120.wav')).toBeNull()
+    })
+
+    it('非対応拡張子（.txt）の場合は null', () => {
+      expect(parseArtistFilename('artist_name_track_120.txt')).toBeNull()
+    })
+
+    it('拡張子なしの場合は null', () => {
+      expect(parseArtistFilename('artist_name_track_120')).toBeNull()
+    })
   })
 })
 
@@ -92,19 +151,35 @@ describe('transformArtistFilename', () => {
       const result = transformArtistFilename(
         'artist_shiina-ringo_kohukuron_133.wav',
       )
-      expect(result).toBe('artist/shiina-ringo/kohukuron_133.wav')
+      expect(result).toBe('AT/shiina-ringo/kohukuron_133.wav')
     })
 
     it('大文字を含む形式を変換する', () => {
       const result = transformArtistFilename(
         'ARTIST_Band-Name_Song-Title_120.wav',
       )
-      expect(result).toBe('artist/Band-Name/Song-Title_120.wav')
+      expect(result).toBe('AT/Band-Name/Song-Title_120.wav')
     })
 
     it('MP3 ファイルを変換する', () => {
       const result = transformArtistFilename('artist_test_track_90.mp3')
-      expect(result).toBe('artist/test/track_90.mp3')
+      expect(result).toBe('AT/test/track_90.mp3')
+    })
+
+    it('.WAV / .MP3 大文字拡張子を変換する', () => {
+      expect(transformArtistFilename('artist_a_b_120.WAV')).toBe(
+        'AT/a/b_120.WAV',
+      )
+      expect(transformArtistFilename('artist_a_b_120.MP3')).toBe(
+        'AT/a/b_120.MP3',
+      )
+    })
+
+    it('Number.MAX_SAFE_INTEGER を超える BPM でも入力表記のまま出力する（回帰）', () => {
+      const result = transformArtistFilename(
+        'artist_a_b_9999999999999999999.wav',
+      )
+      expect(result).toBe('AT/a/b_9999999999999999999.wav')
     })
   })
 
@@ -115,6 +190,14 @@ describe('transformArtistFilename', () => {
 
     it('不正な形式は null', () => {
       expect(transformArtistFilename('artist_invalid.wav')).toBeNull()
+    })
+
+    it('非対応拡張子（.txt）の場合は null', () => {
+      expect(transformArtistFilename('artist_a_b_120.txt')).toBeNull()
+    })
+
+    it('拡張子なしの場合は null', () => {
+      expect(transformArtistFilename('artist_a_b_120')).toBeNull()
     })
   })
 })
