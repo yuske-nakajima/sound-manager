@@ -6,6 +6,7 @@ import { detectBpm } from './bpmDetector.js'
 import { isDrum } from './drumDetector.js'
 import { detectKey } from './keyDetector.js'
 import { isLoop } from './loopDetector.js'
+import { isOrigin, transformOriginFilename } from './originDetector.js'
 import { isTone, transformToneFilename } from './toneDetector.js'
 
 /**
@@ -62,6 +63,15 @@ export function transformFilename(
   // アーティスト判定（最優先）
   if (isArtist(originalFilename)) {
     return transformArtistFilename(originalFilename)
+  }
+
+  // 自作パターン（ORIGIN）判定
+  // ループ判定より前に置く。ORIGIN_track-01_pattern-120.wav のように曲名・
+  // パターン名に数字を含むファイル名は、ループ判定が先に走ると BPM として
+  // 誤解釈される。また ORIGIN_my-song_drum-loop.wav のように loop という語を
+  // 含む場合もループ判定に吸われてしまうため、ORIGIN 判定を先に行う
+  if (isOrigin(originalFilename)) {
+    return transformOriginFilename(originalFilename)
   }
 
   // 単音（クロマチック用）判定
