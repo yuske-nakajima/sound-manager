@@ -199,6 +199,98 @@ snare: SN
     })
   })
 
+  describe('transformFilename - ORIGIN 変換', () => {
+    it('ORIGIN ファイルはディレクトリ構造を含むパスに変換', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'ORIGIN_my-song_pattern-a.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('ORIGIN/my-song/pattern-a.wav')
+    })
+
+    it('小文字の origin_ は ORIGIN 規則の対象外（大文字完全一致のみ）', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'origin_my-song_pattern-a.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBeNull()
+    })
+
+    it('ORIGIN の mp3 ファイルも変換する', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'ORIGIN_my-song_pattern-a.mp3',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('ORIGIN/my-song/pattern-a.mp3')
+    })
+
+    it('規則を外れた ORIGIN ファイルは null を返す（フィールド過多）', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename(
+        'ORIGIN_my_song_pattern.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBeNull()
+    })
+
+    it('規則を外れた ORIGIN ファイルは null を返す（曲名が空文字）', () => {
+      const mapping = new Map([['hihat', 'HH']])
+
+      const result = transformFilename('ORIGIN__pattern.wav', mapping, '0001')
+
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('transformFilename - ORIGIN 判定順序の回帰', () => {
+    it('パターン名に loop を含んでもループ判定に吸われない', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename(
+        'ORIGIN_my-song_drum-loop.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('ORIGIN/my-song/drum-loop.wav')
+    })
+
+    it('パターン名に BPM とみなされうる数字を含んでもループ判定に吸われない', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename(
+        'ORIGIN_track-01_pattern-120.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('ORIGIN/track-01/pattern-120.wav')
+    })
+
+    it('origin_ で始まる既存の一般ファイルは ORIGIN 規則を経由せず従来どおりループ判定に流れる', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename('origin_120_loop.wav', mapping, '0001')
+
+      expect(result).toBe('LP-M-120__0001.wav')
+    })
+  })
+
   describe('transformFilename - プレフィックス誤検出の回帰', () => {
     it('tonearm_C3_sample.wav は tone_ として扱われずカテゴリ経路を通る', () => {
       const mapping = new Map([['tonearm', 'TA']])
@@ -218,6 +310,18 @@ snare: SN
       const result = transformFilename('stone_C3.wav', mapping, '0001')
 
       expect(result).toBe('ST__0001.wav')
+    })
+
+    it('original_break_120.wav は ORIGIN_ として扱われずループ経路を通る', () => {
+      const mapping = new Map([['loop', 'LP']])
+
+      const result = transformFilename(
+        'original_break_120.wav',
+        mapping,
+        '0001',
+      )
+
+      expect(result).toBe('LP-M-120__0001.wav')
     })
   })
 

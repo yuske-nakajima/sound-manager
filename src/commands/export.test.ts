@@ -213,6 +213,41 @@ bass: BS
         true,
       )
     })
+
+    it('ORIGIN ファイルはディレクトリ構造を維持してコピーされる', async () => {
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'ORIGIN_my-song_pattern-a.wav'),
+        'data',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'ORIGIN_my-song_pattern-a.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(1)
+      expect(result.copiedFiles[0]?.to).toBe(
+        path.join('ORIGIN', 'my-song', 'pattern-a.wav'),
+      )
+      expect(
+        fs.existsSync(path.join(TO_DIR, 'ORIGIN', 'my-song', 'pattern-a.wav')),
+      ).toBe(true)
+    })
   })
 
   describe('スキップケース', () => {
@@ -280,6 +315,37 @@ bass: BS
         mappings: {
           '0001': {
             originalName: 'tone_guitar_C.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(0)
+      expect(result.skippedFiles).toHaveLength(1)
+      expect(result.skippedFiles[0]?.reason).toContain('no mapping')
+    })
+
+    it('規則を外れた ORIGIN ファイルはスキップ（フィールド過多）', async () => {
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'ORIGIN_my_song_pattern.wav'),
+        'data',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'ORIGIN_my_song_pattern.wav',
             directory: SOURCE_DIR_A,
           },
         },
@@ -408,6 +474,97 @@ bass: BS
         ),
       ).toBe('data-a')
     })
+
+    it('ORIGIN/ など番号サフィックスのない出力先に同名の参照元が解決される場合、overwrite=false では 2 件目以降がスキップされる', async () => {
+      // ORIGIN の出力名には番号サフィックスが付かないため、異なるソースディレクトリの
+      // 同名 ORIGIN ファイルは同一の出力パスに解決される
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'ORIGIN_my-song_pattern-a.wav'),
+        'data-a',
+      )
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_B, 'ORIGIN_my-song_pattern-a.wav'),
+        'data-b',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 2,
+        mappings: {
+          '0001': {
+            originalName: 'ORIGIN_my-song_pattern-a.wav',
+            directory: SOURCE_DIR_A,
+          },
+          '0002': {
+            originalName: 'ORIGIN_my-song_pattern-a.wav',
+            directory: SOURCE_DIR_B,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(1)
+      expect(result.skippedFiles).toHaveLength(1)
+      expect(result.skippedFiles[0]?.reason).toContain('already exists')
+      expect(
+        fs.readFileSync(
+          path.join(TO_DIR, 'ORIGIN', 'my-song', 'pattern-a.wav'),
+          'utf-8',
+        ),
+      ).toBe('data-a')
+    })
+
+    it('ORIGIN/ の出力先衝突は overwrite=true で上書きされる', async () => {
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'ORIGIN_my-song_pattern-a.wav'),
+        'data-a',
+      )
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_B, 'ORIGIN_my-song_pattern-a.wav'),
+        'data-b',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 2,
+        mappings: {
+          '0001': {
+            originalName: 'ORIGIN_my-song_pattern-a.wav',
+            directory: SOURCE_DIR_A,
+          },
+          '0002': {
+            originalName: 'ORIGIN_my-song_pattern-a.wav',
+            directory: SOURCE_DIR_B,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        overwrite: true,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(2)
+      expect(result.skippedFiles).toHaveLength(0)
+      expect(
+        fs.readFileSync(
+          path.join(TO_DIR, 'ORIGIN', 'my-song', 'pattern-a.wav'),
+          'utf-8',
+        ),
+      ).toBe('data-b')
+    })
   })
 
   describe('overwrite オプション', () => {
@@ -464,6 +621,36 @@ bass: BS
 
       expect(result.copiedFiles).toHaveLength(1)
       expect(fs.existsSync(path.join(TO_DIR, 'HH', 'HH__0001.wav'))).toBe(false)
+    })
+
+    it('dry-run モードでは ORIGIN ディレクトリが作られない', async () => {
+      fs.writeFileSync(
+        path.join(SOURCE_DIR_A, 'ORIGIN_my-song_pattern-a.wav'),
+        'data',
+      )
+
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'ORIGIN_my-song_pattern-a.wav',
+            directory: SOURCE_DIR_A,
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(mapping), 'utf-8')
+
+      const result = await exportCommand(TO_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: true,
+        overwrite: false,
+        mappingPath: path.join(CONFIG_DIR, 'mapping.yaml'),
+        logDir: LOG_DIR,
+      })
+
+      expect(result.copiedFiles).toHaveLength(1)
+      expect(fs.existsSync(path.join(TO_DIR, 'ORIGIN'))).toBe(false)
     })
   })
 
