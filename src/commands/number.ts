@@ -102,7 +102,7 @@ export async function numberCommand(
   }
 
   // JSONファイルを保存（dry-run時は保存しない）
-  if (!options.dryRun && result.registeredFiles.length > 0) {
+  if (!options.dryRun) {
     saveNumberMapping(options.jsonPath, mapping)
     logger.info('number', `Saved mapping to: ${options.jsonPath}`)
   }
