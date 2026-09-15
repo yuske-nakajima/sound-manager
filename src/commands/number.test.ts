@@ -188,6 +188,56 @@ describe('numberCommand', () => {
       expect(Object.keys(mapping.mappings)).toHaveLength(1)
     })
 
+    it('新規登録がなくても既存マッピングを番号順に保存する', async () => {
+      const existingMapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1000,
+        mappings: {
+          '0001': { originalName: 'first.wav', directory: '/old' },
+          '1000': { originalName: 'sample.wav', directory: TEST_DIR },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(existingMapping), 'utf-8')
+      fs.writeFileSync(path.join(TEST_DIR, 'sample.wav'), '')
+
+      const result = await numberCommand(TEST_DIR, {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      expect(result.registeredFiles).toHaveLength(0)
+      const content = fs.readFileSync(JSON_PATH, 'utf-8')
+      expect(content.indexOf('"0001"')).toBeLessThan(content.indexOf('"1000"'))
+      expect(JSON.parse(content)).toEqual(existingMapping)
+    })
+
+    it('Unicode表記が異なる同じディレクトリのファイルを重複登録しない', async () => {
+      const unicodeDir = path.join(TEST_DIR, 'マイドライブ')
+      fs.mkdirSync(unicodeDir)
+      fs.writeFileSync(path.join(unicodeDir, 'sample.wav'), '')
+      const existingMapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'sample.wav',
+            directory: unicodeDir.normalize('NFD'),
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(existingMapping), 'utf-8')
+
+      const result = await numberCommand(unicodeDir.normalize('NFC'), {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      expect(result.registeredFiles).toHaveLength(0)
+      expect(result.skippedFiles).toEqual(['sample.wav'])
+    })
+
     it('複数回実行しても重複登録されない', async () => {
       fs.writeFileSync(path.join(TEST_DIR, 'a.wav'), '')
       fs.writeFileSync(path.join(TEST_DIR, 'b.wav'), '')

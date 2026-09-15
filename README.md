@@ -56,18 +56,15 @@ pnpm run start -- number ./sounds-a --json ./number-mapping.json
 pnpm run start -- number ./sounds-b --json ./number-mapping.json
 
 # 実行結果の例
-# 📁 対象ディレクトリ: /path/to/sounds
-# 📄 番号管理JSON: /path/to/number-mapping.json
-# 🔍 DRY-RUN モード（ファイルは変更されません）
+# 🎵 採番プレビュー
+# 新規登録: 2件
+# スキップ: 1件
+# 付与番号: 0001〜0002
 #
-# ✅ 登録済み:
-#   hihat_Am_sample.wav → 0001
-#   kick_heavy.mp3 → 0002
-#
-# ⏭️ スキップ（採番済み）:
-#   snare__0001.wav
-#
-# 📊 結果: 2 ファイルを登録, 1 ファイルをスキップ
+# 登録予定（最大10件）:
+#   0001  hihat_Am_sample.wav
+#   0002  kick_heavy.mp3
+# ログ: /path/to/logs
 ```
 
 #### 番号管理JSONファイルの形式
@@ -141,19 +138,16 @@ pnpm run start -- export --json ./number-mapping.json ./output -m ./my-mapping.y
 pnpm run start -- export --json ./number-mapping.json ./output --overwrite
 
 # 実行結果の例
-# 📄 番号管理JSON: /path/to/number-mapping.json
-# 📁 出力先: /path/to/output
-# 📄 マッピング: /path/to/config/mapping.yaml
+# 📦 エクスポートプレビュー
+# コピー: 2件
+# スキップ: 2件
+# 出力先: /path/to/output
 #
-# ✅ コピー済み:
-#   /sounds-a/hihat_Am_sample__0001.wav → SP/SP_Am__0001.wav
-#   /sounds-b/kick_heavy__0002.mp3 → KK/KK__0002.mp3
-#
-# ⏭️ スキップ:
-#   /sounds-a/unknown_sample__0003.wav (no mapping found)
-#   /sounds-b/missing__0004.wav (file not found)
-#
-# 📊 結果: 2 ファイルをコピー, 2 ファイルをスキップ
+# コピー予定（最大10件）:
+#   /sounds-a/hihat_Am_sample__0001.wav → /path/to/output/SP/SP_Am__0001.wav
+#   /sounds-b/kick_heavy__0002.mp3 → /path/to/output/KK/KK__0002.mp3
+# 番号管理JSON: /path/to/number-mapping.json
+# ログ: /path/to/logs
 ```
 
 #### 出力ディレクトリ構造

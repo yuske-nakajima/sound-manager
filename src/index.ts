@@ -3,6 +3,8 @@ import * as path from 'node:path'
 import { Command } from 'commander'
 import { exportCommand } from './commands/export.js'
 import { numberCommand } from './commands/number.js'
+import { formatExportResult } from './utils/exportResultOutput.js'
+import { formatNumberResult } from './utils/numberResultOutput.js'
 
 const program = new Command()
 
@@ -29,11 +31,6 @@ program
     ) => {
       const absoluteDir = path.resolve(dir)
       const absoluteJsonPath = path.resolve(options.json)
-      console.log(`\n📁 対象ディレクトリ: ${absoluteDir}`)
-      console.log(`📄 番号管理JSON: ${absoluteJsonPath}`)
-      if (options.dryRun) {
-        console.log('🔍 DRY-RUN モード（ファイルは変更されません）\n')
-      }
 
       const result = await numberCommand(absoluteDir, {
         jsonPath: absoluteJsonPath,
@@ -49,23 +46,13 @@ program
         process.exit(1)
       }
 
-      if (result.registeredFiles.length > 0) {
-        console.log('\n✅ 登録済み:')
-        for (const { file, numberKey } of result.registeredFiles) {
-          console.log(`  ${file} → ${numberKey}`)
-        }
+      for (const line of formatNumberResult(result, {
+        dryRun: options.dryRun,
+        jsonPath: absoluteJsonPath,
+        logDir: options.logDir,
+      })) {
+        console.log(line)
       }
-
-      if (result.skippedFiles.length > 0) {
-        console.log('\n⏭️ スキップ（採番済み）:')
-        for (const file of result.skippedFiles) {
-          console.log(`  ${file}`)
-        }
-      }
-
-      console.log(
-        `\n📊 結果: ${result.registeredFiles.length} ファイルを登録, ${result.skippedFiles.length} ファイルをスキップ`,
-      )
     },
   )
 
@@ -96,16 +83,6 @@ program
     ) => {
       const absoluteJsonPath = path.resolve(options.json)
       const absoluteTo = path.resolve(to)
-      console.log(`\n📄 番号管理JSON: ${absoluteJsonPath}`)
-      console.log(`📁 出力先: ${absoluteTo}`)
-      console.log(`📄 マッピング: ${options.mapping}`)
-      if (options.dryRun) {
-        console.log('🔍 DRY-RUN モード（ファイルはコピーされません）')
-      }
-      if (options.overwrite) {
-        console.log('⚠️ 上書きモード')
-      }
-      console.log('')
 
       const result = await exportCommand(absoluteTo, {
         jsonPath: absoluteJsonPath,
@@ -123,23 +100,14 @@ program
         process.exit(1)
       }
 
-      if (result.copiedFiles.length > 0) {
-        console.log('✅ コピー済み:')
-        for (const { from, to } of result.copiedFiles) {
-          console.log(`  ${from} → ${to}`)
-        }
+      for (const line of formatExportResult(result, {
+        dryRun: options.dryRun,
+        jsonPath: absoluteJsonPath,
+        outputDir: absoluteTo,
+        logDir: options.logDir,
+      })) {
+        console.log(line)
       }
-
-      if (result.skippedFiles.length > 0) {
-        console.log('\n⏭️ スキップ:')
-        for (const { file, reason } of result.skippedFiles) {
-          console.log(`  ${file} (${reason})`)
-        }
-      }
-
-      console.log(
-        `\n📊 結果: ${result.copiedFiles.length} ファイルをコピー, ${result.skippedFiles.length} ファイルをスキップ`,
-      )
     },
   )
 
