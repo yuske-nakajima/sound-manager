@@ -43,7 +43,17 @@ export function saveNumberMapping(
   jsonPath: string,
   mapping: NumberMapping,
 ): void {
-  const content = JSON.stringify(mapping, null, 2)
+  const mappings = Object.entries(mapping.mappings)
+    .sort(([left], [right]) => Number(left) - Number(right))
+    .map(
+      ([key, entry]) =>
+        `    ${JSON.stringify(key)}: ${JSON.stringify(entry, null, 2).replaceAll(
+          '\n',
+          '\n    ',
+        )}`,
+    )
+    .join(',\n')
+  const content = `{\n  "version": ${mapping.version},\n  "lastNumber": ${mapping.lastNumber},\n  "mappings": {\n${mappings}\n  }\n}`
   fs.writeFileSync(jsonPath, content, 'utf-8')
 }
 

@@ -119,6 +119,27 @@ describe('numberMapping', () => {
       const saved = JSON.parse(content)
       expect(saved.lastNumber).toBe(5)
     })
+
+    it('1000番台を含むマッピングを番号順に保存する', () => {
+      const jsonPath = path.join(tempDir, 'mapping.json')
+      const mapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1001,
+        mappings: {
+          '0001': { originalName: 'first.wav', directory: '/test' },
+          '0999': { originalName: 'last-three-digit.wav', directory: '/test' },
+          '1000': { originalName: 'first-four-digit.wav', directory: '/test' },
+          '1001': { originalName: 'next.wav', directory: '/test' },
+        },
+      }
+
+      saveNumberMapping(jsonPath, mapping)
+
+      const content = fs.readFileSync(jsonPath, 'utf-8')
+      expect(content.indexOf('"0001"')).toBeLessThan(content.indexOf('"0999"'))
+      expect(content.indexOf('"0999"')).toBeLessThan(content.indexOf('"1000"'))
+      expect(content.indexOf('"1000"')).toBeLessThan(content.indexOf('"1001"'))
+    })
   })
 
   describe('formatNumber', () => {
