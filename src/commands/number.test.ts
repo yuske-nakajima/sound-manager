@@ -212,6 +212,32 @@ describe('numberCommand', () => {
       expect(JSON.parse(content)).toEqual(existingMapping)
     })
 
+    it('Unicode表記が異なる同じディレクトリのファイルを重複登録しない', async () => {
+      const unicodeDir = path.join(TEST_DIR, 'マイドライブ')
+      fs.mkdirSync(unicodeDir)
+      fs.writeFileSync(path.join(unicodeDir, 'sample.wav'), '')
+      const existingMapping: NumberMapping = {
+        version: 1,
+        lastNumber: 1,
+        mappings: {
+          '0001': {
+            originalName: 'sample.wav',
+            directory: unicodeDir.normalize('NFD'),
+          },
+        },
+      }
+      fs.writeFileSync(JSON_PATH, JSON.stringify(existingMapping), 'utf-8')
+
+      const result = await numberCommand(unicodeDir.normalize('NFC'), {
+        jsonPath: JSON_PATH,
+        dryRun: false,
+        logDir: LOG_DIR,
+      })
+
+      expect(result.registeredFiles).toHaveLength(0)
+      expect(result.skippedFiles).toEqual(['sample.wav'])
+    })
+
     it('複数回実行しても重複登録されない', async () => {
       fs.writeFileSync(path.join(TEST_DIR, 'a.wav'), '')
       fs.writeFileSync(path.join(TEST_DIR, 'b.wav'), '')
