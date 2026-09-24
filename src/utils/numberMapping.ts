@@ -47,10 +47,11 @@ export function saveNumberMapping(
     .sort(([left], [right]) => Number(left) - Number(right))
     .map(
       ([key, entry]) =>
-        `    ${JSON.stringify(key)}: ${JSON.stringify(entry, null, 2).replaceAll(
-          '\n',
-          '\n    ',
-        )}`,
+        `    ${JSON.stringify(key)}: ${JSON.stringify(
+          entry,
+          null,
+          2,
+        ).replaceAll('\n', '\n    ')}`,
     )
     .join(',\n')
   const content = `{\n  "version": ${mapping.version},\n  "lastNumber": ${mapping.lastNumber},\n  "mappings": {\n${mappings}\n  }\n}`

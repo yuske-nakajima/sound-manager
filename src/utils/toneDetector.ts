@@ -1,5 +1,9 @@
 import * as path from 'node:path'
-import { getSupportedExtension, hasPrefix, isNameField } from './filenameFields.js'
+import {
+  getSupportedExtension,
+  hasPrefix,
+  isNameField,
+} from './filenameFields.js'
 
 /**
  * 単音（クロマチック用）ファイル情報

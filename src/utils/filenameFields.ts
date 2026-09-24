@@ -1,6 +1,6 @@
 import * as path from 'node:path'
-import { SUPPORTED_EXTENSIONS } from '../types/index.js'
 import type { SupportedExtension } from '../types/index.js'
+import { SUPPORTED_EXTENSIONS } from '../types/index.js'
 
 /**
  * ファイル名フィールドの共通文字集合を検証する。

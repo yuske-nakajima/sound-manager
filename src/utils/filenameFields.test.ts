@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { getSupportedExtension, hasPrefix, isNameField } from './filenameFields.js'
+import {
+  getSupportedExtension,
+  hasPrefix,
+  isNameField,
+} from './filenameFields.js'
 
 describe('isNameField', () => {
   describe('正常系', () => {
