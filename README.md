@@ -552,7 +552,7 @@ ORIGIN のプレフィックス判定は `ORIGIN_`（大文字のみ）の完全
 ### 前提条件
 
 - Node.js 24.x (`.mise.toml` で固定)
-- pnpm 10.x (`.mise.toml` で固定)
+- pnpm 12.x (`.mise.toml` で固定)
 
 ### 開発コマンド
 

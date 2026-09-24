@@ -29,7 +29,8 @@ function normalizeDirectory(directory: string): string {
 function createRegisteredFiles(mapping: NumberMapping): Set<string> {
   return new Set(
     Object.values(mapping.mappings).map(
-      (entry) => `${normalizeDirectory(entry.directory)}\u0000${entry.originalName}`,
+      (entry) =>
+        `${normalizeDirectory(entry.directory)}\u0000${entry.originalName}`,
     ),
   )
 }
@@ -42,7 +43,9 @@ function isAlreadyRegistered(
   fileName: string,
   directory: string,
 ): boolean {
-  return registeredFiles.has(`${normalizeDirectory(directory)}\u0000${fileName}`)
+  return registeredFiles.has(
+    `${normalizeDirectory(directory)}\u0000${fileName}`,
+  )
 }
 
 /**

@@ -295,11 +295,7 @@ snare: SN
     it('tonearm_C3_sample.wav は tone_ として扱われずカテゴリ経路を通る', () => {
       const mapping = new Map([['tonearm', 'TA']])
 
-      const result = transformFilename(
-        'tonearm_C3_sample.wav',
-        mapping,
-        '0001',
-      )
+      const result = transformFilename('tonearm_C3_sample.wav', mapping, '0001')
 
       expect(result).toBe('TA__0001.wav')
     })
