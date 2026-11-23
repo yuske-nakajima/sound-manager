@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "音源名を管理するためのCLIツール",
   "type": "module",
-  "packageManager": "pnpm@12.18.0",
+  "packageManager": "pnpm@12.21.0",
   "scripts": {
     "start": "tsx src/index.ts",
     "test": "vitest run",
@@ -22,7 +22,7 @@
   "author": "yuske-nakajima",
   "license": "UNLICENSED",
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
+    "@biomejs/biome": "2.6.8",
     "@types/node": "26.6.6",
     "husky": "9.1.7",
     "tsx": "4.23.15",
@@ -30,8 +30,8 @@
     "vitest": "5.1.0"
   },
   "engines": {
-    "node": "26.13.0",
-    "pnpm": "12.18.0"
+    "node": "26.13.1",
+    "pnpm": "12.21.0"
   },
   "dependencies": {
     "commander": "15.1.0",
